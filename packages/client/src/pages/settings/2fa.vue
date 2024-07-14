@@ -2,12 +2,6 @@
 <div>
 	<MkButton v-if="!twoFactorData && !$i.twoFactorEnabled" @click="register">{{ i18n.ts._2fa.registerDevice }}</MkButton>
 	<template v-if="$i.twoFactorEnabled">
-		<MkInfo v-if="$i.twoFactorEnabled && $i.twoFactorBackupCodesStock === 'partial'" warn>
-			{{ i18n.ts._2fa.backupCodeUsedWarning }}
-		</MkInfo>
-		<MkInfo v-if="$i.twoFactorEnabled && $i.twoFactorBackupCodesStock === 'none'" warn>
-			{{ i18n.ts._2fa.backupCodesExhaustedWarning }}
-		</MkInfo>
 		<p>{{ i18n.ts._2fa.alreadyRegistered }}</p>
 		<MkButton @click="unregister">{{ i18n.ts.unregister }}</MkButton>
 
@@ -17,14 +11,14 @@
 			<h2 class="heading">{{ i18n.ts.securityKey }}</h2>
 			<p>{{ i18n.ts._2fa.securityKeyInfo }}</p>
 			<div class="key-list">
-				<div v-for="key in $i.securityKeysList" class="key">
+				<div v-for="key in $i.securityKeysList" :key="key.id" class="key">
 					<h3>{{ key.name }}</h3>
 					<div class="last-used">{{ i18n.ts.lastUsed }}<MkTime :time="key.lastUsed"/></div>
 					<MkButton @click="unregisterKey(key)">{{ i18n.ts.unregister }}</MkButton>
 				</div>
 			</div>
 
-			<MkSwitch v-if="$i.securityKeysList.length > 0" v-model="usePasswordLessLogin" @update:modelValue="updatePasswordLessLogin">{{ i18n.ts.passwordLessLogin }}</MkSwitch>
+			<MkSwitch v-if="$i.securityKeysList.length > 0" v-model="usePasswordLessLogin" @update:model-value="updatePasswordLessLogin">{{ i18n.ts.passwordLessLogin }}</MkSwitch>
 
 			<MkInfo v-if="registration && registration.error" warn>{{ i18n.ts.error }} {{ registration.error }}</MkInfo>
 			<MkButton v-if="!registration || registration.error" @click="addSecurityKey">{{ i18n.ts._2fa.registerKey }}</MkButton>
@@ -32,7 +26,7 @@
 			<ol v-if="registration && !registration.error">
 				<li v-if="registration.stage >= 0">
 					{{ i18n.ts.tapSecurityKey }}
-					<i v-if="registration.saving && registration.stage == 0" class="fas fa-spinner fa-pulse fa-fw"></i>
+					<MkLoading v-if="registration.saving && registration.stage == 0" :em="true"/>
 				</li>
 				<li v-if="registration.stage >= 1">
 					<MkForm :disabled="registration.stage != 1 || registration.saving">
@@ -40,7 +34,7 @@
 							<template #label>{{ i18n.ts.securityKeyName }}</template>
 						</MkInput>
 						<MkButton :disabled="keyName.length == 0" @click="registerKey">{{ i18n.ts.registerSecurityKey }}</MkButton>
-						<i v-if="registration.saving && registration.stage == 1" class="fas fa-spinner fa-pulse fa-fw"></i>
+						<MkLoading v-if="registration.saving && registration.stage == 1" :em="true"/>
 					</MkForm>
 				</li>
 			</ol>
@@ -88,16 +82,15 @@ const usePasswordLessLogin = ref($i!.usePasswordLessLogin);
 const registration = ref<any>(null);
 const keyName = ref('');
 const token = ref(null);
-const backupCodes = ref<string[]>();
 
 function register() {
 	os.inputText({
 		title: i18n.ts.password,
-		type: 'password'
+		type: 'password',
 	}).then(({ canceled, result: password }) => {
 		if (canceled) return;
 		os.api('i/2fa/register', {
-			password: password
+			password: password,
 		}).then(data => {
 			twoFactorData.value = data;
 		});
@@ -107,11 +100,11 @@ function register() {
 function unregister() {
 	os.inputText({
 		title: i18n.ts.password,
-		type: 'password'
+		type: 'password',
 	}).then(({ canceled, result: password }) => {
 		if (canceled) return;
 		os.api('i/2fa/unregister', {
-			password: password
+			password: password,
 		}).then(() => {
 			usePasswordLessLogin.value = false;
 			updatePasswordLessLogin();
@@ -122,13 +115,18 @@ function unregister() {
 	});
 }
 
-async function submit() {
-	const res = await os.apiWithDialog('i/2fa/done', {
-		token: token.value.toString(),
+function submit() {
+	os.api('i/2fa/done', {
+		token: token.value,
+	}).then(() => {
+		os.success();
+		$i!.twoFactorEnabled = true;
+	}).catch(err => {
+		os.alert({
+			type: 'error',
+			text: err,
+		});
 	});
-	backupCodes.value = res.backupCodes;
-	downloadBackupCodes();
-	$i!.twoFactorEnabled = true;
 }
 
 function registerKey() {
@@ -139,7 +137,7 @@ function registerKey() {
 		challengeId: registration.value.challengeId,
 		// we convert each 16 bits to a string to serialise
 		clientDataJSON: stringify(registration.value.credential.response.clientDataJSON),
-		attestationObject: hexify(registration.value.credential.response.attestationObject)
+		attestationObject: hexify(registration.value.credential.response.attestationObject),
 	}).then(key => {
 		registration.value = null;
 		key.lastUsed = new Date();
@@ -150,12 +148,12 @@ function registerKey() {
 function unregisterKey(key) {
 	os.inputText({
 		title: i18n.ts.password,
-		type: 'password'
+		type: 'password',
 	}).then(({ canceled, result: password }) => {
 		if (canceled) return;
 		return os.api('i/2fa/remove-key', {
 			password,
-			credentialId: key.id
+			credentialId: key.id,
 		}).then(() => {
 			usePasswordLessLogin.value = false;
 			updatePasswordLessLogin();
@@ -165,27 +163,14 @@ function unregisterKey(key) {
 	});
 }
 
-async function downloadBackupCodes() {
-	await os.alert({
-		text: i18n.ts.download,
-	});
-	if (backupCodes.value !== undefined) {
-		const txtBlob = new Blob([backupCodes.value.join('\n')], { type: 'text/plain' });
-		const dummya = document.createElement('a');
-		dummya.href = URL.createObjectURL(txtBlob);
-		dummya.download = `${$i?.username}-2fa-backup-codes.txt`;
-		dummya.click();
-	}
-}
-
 function addSecurityKey() {
 	os.inputText({
 		title: i18n.ts.password,
-		type: 'password'
+		type: 'password',
 	}).then(({ canceled, result: password }) => {
 		if (canceled) return;
 		os.api('i/2fa/register-key', {
-			password
+			password,
 		}).then(reg => {
 			registration.value = {
 				password,
@@ -195,7 +180,7 @@ function addSecurityKey() {
 					challenge: byteify(reg!.challenge, 'base64'),
 					rp: {
 						id: hostname,
-						name: 'Misskey'
+						name: 'Misskey',
 					},
 					user: {
 						id: byteify($i!.id, 'ascii'),
@@ -204,12 +189,12 @@ function addSecurityKey() {
 					},
 					pubKeyCredParams: [{ alg: -7, type: 'public-key' }],
 					timeout: 60000,
-					attestation: 'direct'
+					attestation: 'direct',
 				},
-				saving: true
+				saving: true,
 			};
 			return navigator.credentials.create({
-				publicKey: registration.value.publicKeyOptions
+				publicKey: registration.value.publicKeyOptions,
 			});
 		}).then(credential => {
 			registration.value.credential = credential;
@@ -225,7 +210,7 @@ function addSecurityKey() {
 
 async function updatePasswordLessLogin() {
 	await os.api('i/2fa/password-less', {
-		value: !!usePasswordLessLogin.value
+		value: !!usePasswordLessLogin.value,
 	});
 }
 </script>

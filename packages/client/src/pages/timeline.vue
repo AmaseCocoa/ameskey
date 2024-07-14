@@ -7,23 +7,14 @@
 			<XPostForm v-if="$store.reactiveState.showFixedPostForm.value" class="post-form _block" fixed/>
 
 			<div v-if="queue > 0" class="new"><button class="_buttonPrimary" @click="top()">{{ i18n.ts.newNoteRecived }}</button></div>
-			<div>
-				<div v-if="((src === 'local' || src === 'social') && !isLocalTimelineAvailable) || (src === 'media' && !isMediaTimelineAvailable) || (src === 'personal' && !isPersonalTimelineAvailable) || (src === 'limited' && !isLimitedTimelineAvailable) || (src === 'global' && !isGlobalTimelineAvailable)" class="iwaalbte">
-					<p>
-						<i class="fas fa-minus-circle"></i>
-						{{ i18n.ts.disabledTimelineTitle }}
-					</p>
-					<p class="desc">{{ i18n.ts.disabledTimelineDescription }}</p>
-				</div>
-				<div v-else class="tl _block">
-					<XTimeline
-						ref="tl" :key="src"
-						class="tl"
-						:src="src"
-						:sound="true"
-						@queue="queueUpdated"
-					/>
-				</div>
+			<div class="tl _block">
+				<XTimeline
+					ref="tl" :key="src"
+					class="tl"
+					:src="src"
+					:sound="true"
+					@queue="queueUpdated"
+				/>
 			</div>
 		</div>
 	</MkSpacer>
@@ -31,7 +22,7 @@
 </template>
 
 <script lang="ts" setup>
-import { defineAsyncComponent, computed, watch } from 'vue';
+import { defineAsyncComponent, computed, watch, provide } from 'vue';
 import XTimeline from '@/components/MkTimeline.vue';
 import XPostForm from '@/components/MkPostForm.vue';
 import { scroll } from '@/scripts/scroll';
@@ -42,13 +33,12 @@ import { instance } from '@/instance';
 import { $i } from '@/account';
 import { definePageMetadata } from '@/scripts/page-metadata';
 
+provide('shouldOmitHeaderTitle', true);
+
 const XTutorial = defineAsyncComponent(() => import('./timeline.tutorial.vue'));
 
-const isMediaTimelineAvailable = (!instance.disableLocalTimeline || ($i != null && ($i.isModerator || $i.isAdmin))) && defaultStore.state.enableMTL && defaultStore.state.enableLTL;
-const isLocalTimelineAvailable = (!instance.disableLocalTimeline || ($i != null && ($i.isModerator || $i.isAdmin))) && defaultStore.state.enableLTL;
-const isGlobalTimelineAvailable = (!instance.disableGlobalTimeline || ($i != null && ($i.isModerator || $i.isAdmin))) && defaultStore.state.enableGTL;
-const isPersonalTimelineAvailable = $i != null && defaultStore.state.enablePTL;
-const isLimitedTimelineAvailable = $i != null && defaultStore.state.enableLimitedTL;
+const isLocalTimelineAvailable = !instance.disableLocalTimeline || ($i != null && ($i.isModerator || $i.isAdmin));
+const isGlobalTimelineAvailable = !instance.disableGlobalTimeline || ($i != null && ($i.isModerator || $i.isAdmin));
 const keymap = {
 	't': focus,
 };
@@ -91,7 +81,9 @@ async function chooseAntenna(ev: MouseEvent): Promise<void> {
 }
 
 async function chooseChannel(ev: MouseEvent): Promise<void> {
-	const channels = await os.api('channels/followed');
+	const channels = await os.api('channels/followed', {
+		limit: 100,
+	});
 	const items = channels.map(channel => ({
 		type: 'link' as const,
 		text: channel.name,
@@ -101,11 +93,20 @@ async function chooseChannel(ev: MouseEvent): Promise<void> {
 	os.popupMenu(items, ev.currentTarget ?? ev.target);
 }
 
-function saveSrc(newSrc: 'home' | 'local' | 'social' | 'global' | 'limited' | 'media' | 'personal'): void {
+function saveSrc(newSrc: 'home' | 'local' | 'social' | 'global'): void {
 	defaultStore.set('tl', {
 		...defaultStore.state.tl,
 		src: newSrc,
 	});
+}
+
+async function timetravel(): Promise<void> {
+	const { canceled, result: date } = await os.inputDate({
+		title: i18n.ts.date,
+	});
+	if (canceled) return;
+
+	tlComponent.timetravel(date);
 }
 
 function focus(): void {
@@ -117,50 +118,35 @@ const headerActions = $computed(() => []);
 const headerTabs = $computed(() => [{
 	key: 'home',
 	title: i18n.ts._timelines.home,
-	icon: 'fas fa-home',
+	icon: 'ti ti-home',
 	iconOnly: true,
-}, ...(isLimitedTimelineAvailable ? [{
-	key: 'limited',
-	title: i18n.ts._timelines.limited,
-	icon: 'fas fa-unlock',
-	iconOnly: true,
-}] : []), ...(isLocalTimelineAvailable ? [{
+}, ...(isLocalTimelineAvailable ? [{
 	key: 'local',
 	title: i18n.ts._timelines.local,
-	icon: 'fas fa-comments',
+	icon: 'ti ti-planet',
 	iconOnly: true,
 }, {
 	key: 'social',
 	title: i18n.ts._timelines.social,
-	icon: 'fas fa-share-alt',
+	icon: 'ti ti-rocket',
 	iconOnly: true,
-}, ...(isMediaTimelineAvailable ? [{
-	key: 'media',
-	title: i18n.ts._timelines.media,
-	icon: 'fas fa-file',
-	iconOnly: true,
-}] : [])] : []), ...(isGlobalTimelineAvailable ? [{
+}] : []), ...(isGlobalTimelineAvailable ? [{
 	key: 'global',
 	title: i18n.ts._timelines.global,
-	icon: 'fas fa-globe',
-	iconOnly: true,
-}] : []), ...(isPersonalTimelineAvailable ? [{
-	key: 'personal',
-	title: i18n.ts._timelines.personal,
-	icon: 'fas fa-book',
+	icon: 'ti ti-whirl',
 	iconOnly: true,
 }] : []), {
-	icon: 'fas fa-list-ul',
+	icon: 'ti ti-list',
 	title: i18n.ts.lists,
 	iconOnly: true,
 	onClick: chooseList,
 }, {
-	icon: 'fas fa-satellite',
+	icon: 'ti ti-antenna',
 	title: i18n.ts.antennas,
 	iconOnly: true,
 	onClick: chooseAntenna,
 }, {
-	icon: 'fas fa-satellite-dish',
+	icon: 'ti ti-device-tv',
 	title: i18n.ts.channel,
 	iconOnly: true,
 	onClick: chooseChannel,
@@ -168,7 +154,7 @@ const headerTabs = $computed(() => [{
 
 definePageMetadata(computed(() => ({
 	title: i18n.ts.timeline,
-	icon: src === 'local' ? 'fas fa-comments' : src === 'social' ? 'fas fa-share-alt' : src === 'global' ? 'fas fa-globe' : src === 'limited' ? 'fas fa-unlock' :src === 'media' ? 'fas fa-file' :src === 'personal' ? 'fas fa-book' : 'fas fa-home',
+	icon: src === 'local' ? 'ti ti-planet' : src === 'social' ? 'ti ti-rocket' : src === 'global' ? 'ti ti-whirl' : 'ti ti-home',
 })));
 </script>
 
@@ -196,15 +182,6 @@ definePageMetadata(computed(() => ({
 		background: var(--bg);
 		border-radius: var(--radius);
 		overflow: clip;
-	}
-}
-.iwaalbte {
-	text-align: center;
-	> p {
-		margin: 16px;
-		&.desc {
-			font-size: 14px;
-		}
 	}
 }
 </style>

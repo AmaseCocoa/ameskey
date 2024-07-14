@@ -1,12 +1,32 @@
 import { markRaw, ref } from 'vue';
+import { Note, UserDetailed } from 'misskey-js/built/entities';
 import { Storage } from './pizzax';
-import { Theme } from './scripts/theme';
 
-export const postFormActions = [];
-export const userActions = [];
-export const noteActions = [];
-export const noteViewInterruptors = [];
-export const notePostInterruptors = [];
+export const postFormActions: {
+	title: string;
+	handler: (
+		form: { text: NonNullable<Note['text']> },
+		update: (key: string, value: NonNullable<Note['text']>) => void,
+	) => void;
+}[] = [];
+export const userActions: {
+	title: string;
+	handler: (
+		user: UserDetailed,
+	) => void;
+}[] = [];
+export const noteActions: {
+	title: string;
+	handler: (
+		note: Note,
+	) => void;
+}[] = [];
+export const noteViewInterruptors: {
+	handler: (note: Note) => unknown;
+}[] = [];
+export const notePostInterruptors: {
+	handler: (note: FIXME) => unknown;
+}[] = [];
 
 // TODO: それぞれいちいちwhereとかdefaultというキーを付けなきゃいけないの冗長なのでなんとかする(ただ型定義が面倒になりそう)
 //       あと、現行の定義の仕方なら「whereが何であるかに関わらずキー名の重複不可」という制約を付けられるメリットもあるからそのメリットを引き継ぐ方法も考えないといけない
@@ -29,7 +49,7 @@ export const defaultStore = markRaw(new Storage('base', {
 	},
 	defaultNoteVisibility: {
 		where: 'account',
-		default: 'public',
+		default: 'public' as 'public' | 'home' | 'followers' | 'specified',
 	},
 	defaultNoteLocalOnly: {
 		where: 'account',
@@ -161,11 +181,11 @@ export const defaultStore = markRaw(new Storage('base', {
 	},
 	useBlurEffectForModal: {
 		where: 'device',
-		default: false,
+		default: true,
 	},
 	useBlurEffect: {
 		where: 'device',
-		default: false,
+		default: true,
 	},
 	showFixedPostForm: {
 		where: 'device',
@@ -251,65 +271,37 @@ export const defaultStore = markRaw(new Storage('base', {
 		where: 'device',
 		default: false,
 	},
-	enableMTL: {
-		where: 'device',
-		default: false,
-	},
-	enableLTL: {
-		where: 'device',
-		default: true,
-	},
-	enableGTL: {
-		where: 'device',
-		default: true,
-	},
-	enablePTL: {
-		where: 'device',
-		default: false,
-	},
-	enableLimitedTL: {
-		where: 'device',
-		default: false,
-	},
-	enableMfm: {
-		where: 'device',
-		default: true
-	},
-	enableSudo: {
-		where: 'device',
-		default: false
-	},
 }));
 
 // TODO: 他のタブと永続化されたstateを同期
 
 const PREFIX = 'miux:';
 
-type Plugin = {
+export type Plugin = {
 	id: string;
 	name: string;
 	active: boolean;
+	config?: Record<string, { default: any }>;
 	configData: Record<string, any>;
 	token: string;
+	version: string;
 	ast: any[];
 };
 
 /**
  * 常にメモリにロードしておく必要がないような設定情報を保管するストレージ(非リアクティブ)
  */
-import lightTheme from '@/themes/l-apricot.json5';
-import darkTheme from '@/themes/d-persimmon.json5';
+import lightTheme from '@/themes/l-light.json5';
+import darkTheme from '@/themes/d-green-lime.json5';
 
 export class ColdDeviceStorage {
 	public static default = {
 		lightTheme,
 		darkTheme,
-		syncDeviceDarkMode: false,
+		syncDeviceDarkMode: true,
 		plugins: [] as Plugin[],
-		mediaVolume: 0,
-		sound_masterVolume: 0,
-		sound_notUseSound: false,
-		sound_useSoundOnlyWhenActive: false,
+		mediaVolume: 0.5,
+		sound_masterVolume: 0.3,
 		sound_note: { type: 'syuilo/down', volume: 1 },
 		sound_noteMy: { type: 'syuilo/up', volume: 1 },
 		sound_notification: { type: 'syuilo/pope2', volume: 1 },

@@ -24,13 +24,11 @@
 				<template #value>{{ instance.description }}</template>
 			</MkKeyValue>
 
-			<FormSection v-if="iAmModerator && enableSudo">
+			<FormSection v-if="iAmModerator">
 				<template #label>Moderation</template>
-				<FormSwitch v-model="suspended" class="_formBlock" @update:modelValue="toggleSuspend">{{ i18n.ts.stopActivityDelivery }}</FormSwitch>
-				<FormSwitch :disabled="!iAmAdmin || (isBlocked && !isExactlyBlocked)" v-model="isBlocked" class="_formBlock" @update:modelValue="toggleBlock">{{ i18n.ts.blockThisInstance }}</FormSwitch>
-				<MkButton @click="refreshMetadata"><i class="fas fa-refresh"></i> Refresh metadata</MkButton>
-				<MkButton v-if="(!suspended && !isBlocked) && $i && $i.isAdmin" inline danger @click="deleteFollowing"><i class="fas fa-minus"></i> Unfollow All Instance Users</MkButton>
-				<MkButton v-if="(suspended || isBlocked) && $i && $i.isAdmin" inline danger @click="deleteInstanceUsers"><i class="fas fa-trash-alt"></i> Delete All Instance Users</MkButton>
+				<FormSwitch v-model="suspended" class="_formBlock" @update:model-value="toggleSuspend">{{ i18n.ts.stopActivityDelivery }}</FormSwitch>
+				<FormSwitch v-model="isBlocked" class="_formBlock" @update:model-value="toggleBlock">{{ i18n.ts.blockThisInstance }}</FormSwitch>
+				<MkButton @click="refreshMetadata"><i class="ti ti-refresh"></i> Refresh metadata</MkButton>
 			</FormSection>
 
 			<FormSection>
@@ -55,7 +53,7 @@
 					<template #value><MkTime v-if="instance.latestRequestReceivedAt" :time="instance.latestRequestReceivedAt"/><span v-else>N/A</span></template>
 				</MkKeyValue>
 			</FormSection>
-
+	
 			<FormSection>
 				<MkKeyValue oneline style="margin: 1em 0;">
 					<template #key>Following (Pub)</template>
@@ -130,13 +128,11 @@ import MkSelect from '@/components/form/select.vue';
 import FormSwitch from '@/components/form/switch.vue';
 import * as os from '@/os';
 import number from '@/filters/number';
-import bytes from '@/filters/bytes';
-import { iAmModerator, iAmAdmin } from '@/account';
+import { iAmModerator } from '@/account';
 import { definePageMetadata } from '@/scripts/page-metadata';
 import { i18n } from '@/i18n';
 import MkUserCardMini from '@/components/MkUserCardMini.vue';
 import MkPagination from '@/components/MkPagination.vue';
-import { defaultStore } from '@/store';
 
 const props = defineProps<{
 	host: string;
@@ -148,8 +144,6 @@ let meta = $ref<misskey.entities.DetailedInstanceMetadata | null>(null);
 let instance = $ref<misskey.entities.Instance | null>(null);
 let suspended = $ref(false);
 let isBlocked = $ref(false);
-let isExactlyBlocked = $ref(false);
-const enableSudo = defaultStore.state.enableSudo;
 
 const usersPagination = {
 	endpoint: iAmModerator ? 'admin/show-users' : 'users' as const,
@@ -163,47 +157,25 @@ const usersPagination = {
 };
 
 async function fetch() {
-	if (iAmAdmin) {
-		meta = await os.api('admin/meta');
-	}
 	instance = await os.api('federation/show-instance', {
 		host: props.host,
 	});
 	suspended = instance.isSuspended;
 	isBlocked = instance.isBlocked;
-	isExactlyBlocked = meta.blockedHosts.includes(instance.host);
 }
 
 async function toggleBlock(ev) {
-	if (!meta) {
-		fetch();
-		throw new Error('No meta?');
-	}
-	if (!instance) {
-		fetch();
-		throw new Error('No instance?');
-	}
-	if (!isBlocked && !isExactlyBlocked) {
-		isBlocked = true;
-		return;
-	}
-	const { host } = instance;
+	if (meta == null) return;
 	await os.api('admin/update-meta', {
-		blockedHosts: isBlocked ? meta.blockedHosts.concat([host]) : meta.blockedHosts.filter(x => x !== host),
+		blockedHosts: isBlocked ? meta.blockedHosts.concat([instance.host]) : meta.blockedHosts.filter(x => x !== instance.host),
 	});
-	fetch();
 }
 
 async function toggleSuspend(v) {
-	if (!instance) {
-		fetch();
-		throw new Error('No instance?');
-	}
 	await os.api('admin/federation/update-instance', {
 		host: instance.host,
 		isSuspended: suspended,
 	});
-	fetch();
 }
 
 function refreshMetadata() {
@@ -215,61 +187,11 @@ function refreshMetadata() {
 	});
 }
 
-async function deleteInstanceUsers() {
-	const { canceled } = await os.confirm({
-		type: "warning",
-		text: i18n.t("removeAreYouSure", { x: instance.host }),
-	});
-	if (canceled) return;
-	const typed = await os.inputText({
-		text: i18n.t('typeToConfirm', { x: instance?.host }),
-	});
-	if (typed.canceled) return;
-	if (typed.result === instance?.host) {
-		await os.api('admin/delete-instance-users', {
-			host: instance.host,
-		});
-		await os.alert({
-			text: 'Account Deletion is in progress',
-		});
-	} else {
-		os.alert({
-			type: 'error',
-			text: 'input not match',
-		});
-	}
-}
-
-async function deleteFollowing() {
-	const { canceled } = await os.confirm({
-		type: "warning",
-		text: i18n.t("unfollowConfirm", { name: instance.host }),
-	});
-	if (canceled) return;
-	const typed = await os.inputText({
-		text: i18n.t('typeToConfirm', { x: instance?.host }),
-	});
-	if (typed.canceled) return;
-	if (typed.result === instance?.host) {
-		await os.api('admin/federation/remove-all-following', {
-			host: instance.host,
-		});
-		await os.alert({
-			text: 'Unfollowing is in progress',
-		});
-	} else {
-		os.alert({
-			type: 'error',
-			text: 'input not match',
-		});
-	}
-}
-
 fetch();
 
 const headerActions = $computed(() => [{
 	text: `https://${props.host}`,
-	icon: 'fas fa-external-link-alt',
+	icon: 'ti ti-external-link',
 	handler: () => {
 		window.open(`https://${props.host}`, '_blank');
 	},
@@ -278,24 +200,24 @@ const headerActions = $computed(() => [{
 const headerTabs = $computed(() => [{
 	key: 'overview',
 	title: i18n.ts.overview,
-	icon: 'fas fa-info-circle',
+	icon: 'ti ti-info-circle',
 }, {
 	key: 'chart',
 	title: i18n.ts.charts,
-	icon: 'fas fa-chart-simple',
-}, (iAmModerator && enableSudo) ? {
+	icon: 'ti ti-chart-line',
+}, {
 	key: 'users',
 	title: i18n.ts.users,
-	icon: 'fas fa-users',
-} : null, {
+	icon: 'ti ti-users',
+}, {
 	key: 'raw',
 	title: 'Raw',
-	icon: 'fas fa-code',
-}].filter(x => x != null));
+	icon: 'ti ti-code',
+}]);
 
 definePageMetadata({
 	title: props.host,
-	icon: 'fas fa-server',
+	icon: 'ti ti-server',
 });
 </script>
 

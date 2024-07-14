@@ -1,30 +1,30 @@
 <template>
-	<MkModal ref="modal" @click="done(true)" @closed="$emit('closed')">
-		<div class="container">
-			<div class="fullwidth top-caption">
-				<div class="mk-dialog">
-					<header>
-						<Mfm v-if="title" class="title" :text="title"/>
-						<span class="text-count" :class="{ over: remainingLength < 0 }">{{ remainingLength }}</span>
-					</header>
-					<textarea v-model="inputValue" autofocus :placeholder="input.placeholder" @keydown="onInputKeydown"></textarea>
-					<div v-if="(showOkButton || showCancelButton)" class="buttons">
-						<MkButton inline primary :disabled="remainingLength < 0" @click="ok">{{ $ts.ok }}</MkButton>
-						<MkButton inline @click="cancel" >{{ $ts.cancel }}</MkButton>
-					</div>
+<MkModal ref="modal" @click="done(true)" @closed="$emit('closed')">
+	<div class="container">
+		<div class="fullwidth top-caption">
+			<div class="mk-dialog">
+				<header>
+					<Mfm v-if="title" class="title" :text="title"/>
+					<span class="text-count" :class="{ over: remainingLength < 0 }">{{ remainingLength }}</span>
+				</header>
+				<textarea v-model="inputValue" autofocus :placeholder="input.placeholder" @keydown="onInputKeydown"></textarea>
+				<div v-if="(showOkButton || showCancelButton)" class="buttons">
+					<MkButton inline primary :disabled="remainingLength < 0" @click="ok">{{ $ts.ok }}</MkButton>
+					<MkButton inline @click="cancel">{{ $ts.cancel }}</MkButton>
 				</div>
 			</div>
-			<div class="hdrwpsaf fullwidth">
-				<header>{{ image.name }}</header>
-				<img :src="image.url" :alt="image.comment" :title="image.comment" @click="$refs.modal.close()"/>
-				<footer>
-					<span>{{ image.type }}</span>
-					<span>{{ bytes(image.size) }}</span>
-					<span v-if="image.properties && image.properties.width">{{ number(image.properties.width) }}px × {{ number(image.properties.height) }}px</span>
-				</footer>
-			</div>
 		</div>
-	</MkModal>
+		<div class="hdrwpsaf fullwidth">
+			<header>{{ image.name }}</header>
+			<img :src="image.url" :alt="image.comment" :title="image.comment" @click="$refs.modal.close()"/>
+			<footer>
+				<span>{{ image.type }}</span>
+				<span>{{ bytes(image.size) }}</span>
+				<span v-if="image.properties && image.properties.width">{{ number(image.properties.width) }}px × {{ number(image.properties.height) }}px</span>
+			</footer>
+		</div>
+	</div>
+</MkModal>
 </template>
 
 <script lang="ts">
@@ -48,22 +48,24 @@ export default defineComponent({
 		},
 		title: {
 			type: String,
-			required: false
+			required: false,
+			default: undefined,
 		},
 		input: {
-			required: true
+			type: Object,
+			required: true,
 		},
 		showOkButton: {
 			type: Boolean,
-			default: true
+			default: true,
 		},
 		showCancelButton: {
 			type: Boolean,
-			default: true
+			default: true,
 		},
 		cancelableByBgClick: {
 			type: Boolean,
-			default: true
+			default: true,
 		},
 	},
 
@@ -71,15 +73,15 @@ export default defineComponent({
 
 	data() {
 		return {
-			inputValue: this.input.default ? this.input.default : null
+			inputValue: this.input.default ? this.input.default : null,
 		};
 	},
 
 	computed: {
 		remainingLength(): number {
-			if (typeof this.inputValue !== "string") return 512;
+			if (typeof this.inputValue !== 'string') return 512;
 			return 512 - length(this.inputValue);
-		}
+		},
 	},
 
 	mounted() {
@@ -94,7 +96,7 @@ export default defineComponent({
 		bytes,
 		number,
 
-		done(canceled, result?) {
+		done(canceled: boolean, result?) {
 			this.$emit('done', { canceled, result });
 			this.$refs.modal.close();
 		},
@@ -116,22 +118,22 @@ export default defineComponent({
 			}
 		},
 
-		onKeydown(evt) {
-			if (evt.which === 27) { // ESC
+		onKeydown(evt: KeyboardEvent) {
+			if (evt.key === 'Escape' || evt.key === 'Esc') {
 				this.cancel();
 			}
 		},
 
-		onInputKeydown(evt) {
-			if (evt.which === 13) { // Enter
+		onInputKeydown(evt: KeyboardEvent) {
+			if (evt.key === 'Enter') {
 				if (evt.ctrlKey) {
 					evt.preventDefault();
 					evt.stopPropagation();
 					this.ok();
 				}
 			}
-		}
-	}
+		},
+	},
 });
 </script>
 

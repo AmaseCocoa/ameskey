@@ -33,7 +33,6 @@ export default defineConfig(({ command, mode }) => {
 
 		define: {
 			_VERSION_: JSON.stringify(meta.version),
-			_SOFTWARE_: JSON.stringify(meta.name),
 			_LANGS_: JSON.stringify(Object.entries(locales).map(([k, v]) => [k, v._lang_])),
 			_ENV_: JSON.stringify(process.env.NODE_ENV),
 			_DEV_: process.env.NODE_ENV !== 'production',
@@ -50,7 +49,6 @@ export default defineConfig(({ command, mode }) => {
 				'chrome100',
 				'firefox100',
 				'safari15',
-				'es2017', // TODO: そのうち消す
 			],
 			manifest: 'manifest.json',
 			rollupOptions: {

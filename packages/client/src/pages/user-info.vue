@@ -13,6 +13,7 @@
 							<span v-if="suspended" class="suspended">Suspended</span>
 							<span v-if="silenced" class="silenced">Silenced</span>
 							<span v-if="moderator" class="moderator">Moderator</span>
+							<span v-if="admin" class="admin">Administrator</span>
 						</span>
 					</div>
 				</div>
@@ -33,7 +34,7 @@
 						<template #value><span class="_monospace">{{ user.id }}</span></template>
 					</MkKeyValue>
 					<!-- 要る？
-					<MkKeyValue :copy="ips[0].ip" v-if="ips.length > 0" oneline style="margin: 1em 0;">
+					<MkKeyValue v-if="ips.length > 0" :copy="user.id" oneline style="margin: 1em 0;">
 						<template #key>IP (recent)</template>
 						<template #value><span class="_monospace">{{ ips[0].ip }}</span></template>
 					</MkKeyValue>
@@ -42,21 +43,13 @@
 						<template #key>{{ i18n.ts.createdAt }}</template>
 						<template #value><span class="_monospace"><MkTime :time="user.createdAt" :mode="'detail'"/></span></template>
 					</MkKeyValue>
-					<MkKeyValue v-if="info && $i.isAdmin && enableSudo" oneline style="margin: 1em 0;">
+					<MkKeyValue v-if="info" oneline style="margin: 1em 0;">
 						<template #key>{{ i18n.ts.lastActiveDate }}</template>
 						<template #value><span class="_monospace"><MkTime :time="info.lastActiveDate" :mode="'detail'"/></span></template>
 					</MkKeyValue>
-					<MkKeyValue :copy="info.email" v-if="info && $i.isAdmin && enableSudo" oneline style="margin: 1em 0;">
+					<MkKeyValue v-if="info" oneline style="margin: 1em 0;">
 						<template #key>{{ i18n.ts.email }}</template>
 						<template #value><span class="_monospace">{{ info.email }}</span></template>
-					</MkKeyValue>
-					<MkKeyValue v-if="info && enableSudo" oneline style="margin: 1em 0;">
-						<template #key>Email Status</template>
-						<template v-if="$i.isAdmin && info.email && info.emailVerified" #value><span class="_monospace">Verified</span></template>
-						<template v-if="$i.isAdmin && info.email && !info.emailVerified" #value><span class="_monospace">Not Verified</span></template>
-						<template v-if="$i.isAdmin && !info.email" #value><span class="_monospace">Not Registered</span></template>
-						<template v-if="!$i.isAdmin && info.emailVerified" #value><span class="_monospace">Verified</span></template>
-						<template v-if="!$i.isAdmin && !info.emailVerified" #value><span class="_monospace">Not Verified / Not Registered</span></template>
 					</MkKeyValue>
 				</div>
 
@@ -66,7 +59,7 @@
 					<div class="_formBlock">
 						<MkKeyValue v-if="user.host" oneline style="margin: 1em 0;">
 							<template #key>{{ i18n.ts.instanceInfo }}</template>
-							<template #value><MkA :to="`/instance-info/${user.host}`" class="_link">{{ user.host }} <i class="fas fa-angle-right"></i></MkA></template>
+							<template #value><MkA :to="`/instance-info/${user.host}`" class="_link">{{ user.host }} <i class="ti ti-chevron-right"></i></MkA></template>
 						</MkKeyValue>
 						<MkKeyValue v-else oneline style="margin: 1em 0;">
 							<template #key>{{ i18n.ts.instanceInfo }}</template>
@@ -82,7 +75,7 @@
 						</MkKeyValue>
 					</div>
 
-					<FormButton v-if="user.host != null && enableSudo" class="_formBlock" @click="updateRemoteUser"><i class="fas fa-sync"></i> {{ i18n.ts.updateRemoteUser }}</FormButton>
+					<FormButton v-if="user.host != null" class="_formBlock" @click="updateRemoteUser"><i class="ti ti-refresh"></i> {{ i18n.ts.updateRemoteUser }}</FormButton>
 
 					<FormFolder class="_formBlock">
 						<template #label>Raw</template>
@@ -93,17 +86,17 @@
 				</FormSection>
 			</div>
 			<div v-else-if="tab === 'moderation'" class="_formRoot">
-				<FormSwitch v-if="user.host == null && $i.isAdmin && (moderator || !user.isAdmin)" v-model="moderator" class="_formBlock" @update:modelValue="toggleModerator">{{ i18n.ts.moderator }}</FormSwitch>
-				<FormSwitch v-model="silenced" class="_formBlock" @update:modelValue="toggleSilence">{{ i18n.ts.silence }}</FormSwitch>
-				<FormSwitch v-model="suspended" class="_formBlock" @update:modelValue="toggleSuspend">{{ i18n.ts.suspend }}</FormSwitch>
+				<FormSelect v-if="user.host == null && $i.isAdmin" v-model="userState" class="_formBlock" @update:model-value="selectUserState">
+					<option value="admin">{{ i18n.ts.administrator }}</option>
+					<option value="moderator">{{ i18n.ts.moderator }}</option>
+					<option value="users">{{ i18n.ts.users }}</option>
+				</FormSelect>
+				<FormSwitch v-if="silenced || ['moderator', 'users'].includes(userState)" v-model="silenced" class="_formBlock" @update:model-value="toggleSilence">{{ i18n.ts.silence }}</FormSwitch>
+				<FormSwitch v-if="suspended || userState === 'users'" v-model="suspended" class="_formBlock" @update:model-value="toggleSuspend">{{ i18n.ts.suspend }}</FormSwitch>
 				{{ i18n.ts.reflectMayTakeTime }}
 				<div class="_formBlock">
-					<FormButton v-if="user.host == null && iAmModerator" inline style="margin-right: 8px;" @click="resetPassword"><i class="fas fa-key"></i> {{ i18n.ts.resetPassword }}</FormButton>
-					<FormButton v-if="user.host == null && user.twoFactorEnabled && iAmModerator" inline style="margin-right: 8px;" @click="reset2fa"><i class="fas fa-key"></i> {{ i18n.ts.reset2fa }}</FormButton>
-					<FormButton v-if="user.host == null && user.isSuspended && iAmModerator" inline danger style="margin-right: 8px;" @click="sendDeleteAccountToRemote"><i class="fas fa-trash-alt"></i> {{ i18n.ts.deleteAccountFederation }}</FormButton>
-					<FormButton v-if="$i.isAdmin" inline danger style="margin-right: 8px;" @click="deleteAccount"><i class="fas fa-trash-alt"></i> {{ i18n.ts.deleteAccount }}</FormButton>
-					<FormButton v-if="$i.isAdmin" inline danger style="margin-right: 8px;" @click="deleteAllFiles"><i class="fas fa-trash-alt"></i> {{ i18n.ts.deleteAllFiles }}</FormButton>
-					<FormButton v-if="user.host == null && iAmModerator && !suspended" inline style="margin-right: 8px;" @click="sendModNotification"><i class="fas fa-bell"></i> {{ $ts.sendModNotification }}</FormButton>
+					<FormButton v-if="user.host == null && iAmModerator" inline style="margin-right: 8px;" @click="resetPassword"><i class="ti ti-key"></i> {{ i18n.ts.resetPassword }}</FormButton>
+					<FormButton v-if="$i.isAdmin" inline danger @click="deleteAccount">{{ i18n.ts.deleteAccount }}</FormButton>
 				</div>
 				<FormTextarea v-model="moderationNote" manual-save class="_formBlock">
 					<template #label>Moderation note</template>
@@ -124,7 +117,7 @@
 
 					<MkFileListForAdmin :pagination="filesPagination" view-mode="grid"/>
 				</FormFolder>
-				<FormSection v-if="user.host == null">
+				<FormSection>
 					<template #label>Drive Capacity Override</template>
 
 					<FormInput v-if="user.host == null" v-model="driveCapacityOverrideMb" inline :manual-save="true" type="number" :placeholder="i18n.t('defaultValueIs', { value: instance.driveCapacityPerLocalUserMb })" @update:model-value="applyDriveCapacityOverride">
@@ -135,29 +128,13 @@
 						</template>
 					</FormInput>
 				</FormSection>
-				<FormSection v-if="iAmModerator">
-					<template #label>{{ i18n.ts.usageAmount }}</template>
-					<div class="_formBlock uawsfosz">
-						<div class="meter"><div :style="meterStyle"></div></div>
-					</div>
-					<FormSplit>
-						<MkKeyValue class="_formBlock">
-							<template #key>{{ i18n.ts.capacity }}</template>
-							<template #value>{{ bytes(capacity, 1) }}</template>
-						</MkKeyValue>
-						<MkKeyValue class="_formBlock">
-							<template #key>{{ i18n.ts.inUse }}</template>
-							<template #value>{{ bytes(usage, 1) }}</template>
-						</MkKeyValue>
-					</FormSplit>
-				</FormSection>
 			</div>
 			<div v-else-if="tab === 'chart'" class="_formRoot">
 				<div class="cmhjzshm">
 					<div class="selects">
-						<MkSelect v-model="chartSrc" style="margin: 0 10px 0 0; flex: 1;">
+						<FormSelect v-model="chartSrc" style="margin: 0 10px 0 0; flex: 1;">
 							<option value="per-user-notes">{{ i18n.ts.notes }}</option>
-						</MkSelect>
+						</FormSelect>
 					</div>
 					<div class="charts">
 						<div class="label">{{ i18n.t('recentNHours', { n: 90 }) }}</div>
@@ -180,34 +157,29 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, watch, ref } from 'vue';
+import { computed, watch } from 'vue';
 import * as misskey from 'misskey-js';
 import MkChart from '@/components/MkChart.vue';
 import MkObjectView from '@/components/MkObjectView.vue';
 import FormTextarea from '@/components/form/textarea.vue';
 import FormSwitch from '@/components/form/switch.vue';
+import FormSelect from '@/components/form/select.vue';
 import FormLink from '@/components/form/link.vue';
 import FormSection from '@/components/form/section.vue';
 import FormButton from '@/components/MkButton.vue';
 import FormInput from '@/components/form/input.vue';
-import FormSplit from '@/components/form/split.vue';
 import FormFolder from '@/components/form/folder.vue';
 import MkKeyValue from '@/components/MkKeyValue.vue';
-import MkSelect from '@/components/form/select.vue';
 import FormSuspense from '@/components/form/suspense.vue';
 import MkFileListForAdmin from '@/components/MkFileListForAdmin.vue';
 import MkInfo from '@/components/MkInfo.vue';
 import * as os from '@/os';
-import number from '@/filters/number';
-import bytes from '@/filters/bytes';
 import { url } from '@/config';
 import { userPage, acct } from '@/filters/user';
 import { definePageMetadata } from '@/scripts/page-metadata';
 import { i18n } from '@/i18n';
 import { iAmAdmin, iAmModerator } from '@/account';
 import { instance } from '@/instance';
-import { defaultStore } from '@/store';
-import tinycolor from 'tinycolor2';
 
 const props = defineProps<{
 	userId: string;
@@ -221,10 +193,12 @@ let info = $ref();
 let ips = $ref(null);
 let ap = $ref(null);
 let moderator = $ref(false);
+let admin = $ref(false);
 let silenced = $ref(false);
 let suspended = $ref(false);
 let driveCapacityOverrideMb: number | null = $ref(0);
 let moderationNote = $ref('');
+let userState: 'admin' | 'moderator' | 'users' = $ref('users');
 const filesPagination = {
 	endpoint: 'admin/drive/files' as const,
 	limit: 10,
@@ -232,20 +206,6 @@ const filesPagination = {
 		userId: props.userId,
 	})),
 };
-const enableSudo = defaultStore.state.enableSudo;
-const usage = ref<any>(null);
-const capacity = ref<any>(null);
-
-const meterStyle = computed(() => {
-	return {
-		width: `${usage.value / capacity.value * 100}%`,
-		background: tinycolor({
-			h: 180 - (usage.value / capacity.value * 180),
-			s: 0.7,
-			l: 0.5,
-		}),
-	};
-});
 
 function createFetcher() {
 	if (iAmModerator) {
@@ -260,12 +220,14 @@ function createFetcher() {
 			info = _info;
 			ips = _ips;
 			moderator = info.isModerator;
+			admin = info.isAdmin;
 			silenced = info.isSilenced;
 			suspended = info.isSuspended;
 			driveCapacityOverrideMb = user.driveCapacityOverrideMb;
 			moderationNote = info.moderationNote;
-			capacity.value = info.capacity;
-			usage.value = info.usage;
+			userState = user.host == null ? (
+				admin ? 'admin' : moderator ? 'moderator' : 'users'
+			) : 'users';
 
 			watch($$(moderationNote), async () => {
 				await os.api('admin/update-user-note', { userId: user.id, text: moderationNote });
@@ -291,37 +253,53 @@ async function updateRemoteUser() {
 }
 
 async function resetPassword() {
-	const confirm = await os.confirm({
-		type: 'warning',
-		text: i18n.ts.resetPasswordConfirm,
+	const { password } = await os.api('admin/reset-password', {
+		userId: user.id,
 	});
-	if (confirm.canceled) {
-		return;
-	} else {
-		const { password } = await os.api('admin/reset-password', {
-			userId: user.id,
-		});
-		os.alert({
-			type: 'success',
-			text: i18n.t('newPasswordIs', { password }),
-		});
-	}
+
+	os.alert({
+		type: 'success',
+		text: i18n.t('newPasswordIs', { password }),
+	});
 }
 
-async function reset2fa() {
-	const confirm = await os.confirm({
-		type: 'warning',
-		text: i18n.ts.reset2faConfirm,
-	});
-	if (confirm.canceled) {
-		return;
+async function selectUserState(v) {
+	const userId = user.id;
+	let rejected = $ref(false);
+	const reject = () => {
+		rejected = true;
+	};
+
+	switch (v) {
+		case 'admin': {
+			if (!rejected && moderator) await os.api('admin/moderators/remove', { userId }).catch(reject);
+			if (!rejected && !admin) await os.api('admin/admin/add', { userId }).catch(reject);
+			break;
+		}
+		case 'moderator': {
+			if (!rejected && admin) await os.api('admin/admin/remove', { userId }).catch(reject);
+			if (!rejected && !moderator) await os.api('admin/moderators/add', { userId }).catch(reject);
+			break;
+		}
+		case 'users': {
+			if (!rejected && moderator) await os.api('admin/moderators/remove', { userId }).catch(reject);
+			if (!rejected && admin) await os.api('admin/admin/remove', { userId }).catch(reject);
+			break;
+		}
+	}
+
+	if (rejected) {
+		const reqState = userState;
+		userState = user.host == null ? (
+			admin ? 'admin' : moderator ? 'moderator' : 'users'
+		) : 'users';
+
+		await os.alert({
+			type: 'error',
+			text: `rejected:\n${userState} -> ${reqState}`,
+		});
 	} else {
-		await os.api('admin/reset-2fa', {
-			userId: user.id,
-		});
-		os.alert({
-			type: 'success',
-		});
+		await refreshUser();
 	}
 }
 
@@ -351,40 +329,23 @@ async function toggleSuspend(v) {
 	}
 }
 
-async function toggleModerator(v) {
-	await os.api(v ? 'admin/moderators/add' : 'admin/moderators/remove', { userId: user.id });
-	await refreshUser();
-}
-
 async function deleteAllFiles() {
 	const confirm = await os.confirm({
 		type: 'warning',
 		text: i18n.ts.deleteAllFilesConfirm,
 	});
 	if (confirm.canceled) return;
-	const typed = await os.inputText({
-		text: i18n.t('typeToConfirm', { x: user?.username }),
-	});
-	if (typed.canceled) return;
-
-	if (typed.result === user?.username) {
-		const process = async () => {
-			await os.api('admin/delete-all-files-of-a-user', { userId: user.id });
-			os.success();
-		};
-		await process().catch(err => {
-			os.alert({
-				type: 'error',
-				text: err.toString(),
-			});
-		});
-		await refreshUser();
-	} else {
+	const process = async () => {
+		await os.api('admin/delete-all-files-of-a-user', { userId: user.id });
+		os.success();
+	};
+	await process().catch(err => {
 		os.alert({
 			type: 'error',
-			text: 'input not match',
+			text: err.toString(),
 		});
-	}
+	});
+	await refreshUser();
 }
 
 async function applyDriveCapacityOverride() {
@@ -427,31 +388,6 @@ async function deleteAccount() {
 	}
 }
 
-async function sendDeleteAccountToRemote() {
-	const confirm = await os.confirm({
-		type: 'warning',
-		text: i18n.ts.deleteAccountConfirm,
-	});
-	if (confirm.canceled) return;
-	await os.apiWithDialog('admin/suspend-user', {
-		userId: user.id,
-		isDelete: true,
-	});
-	await refreshUser();
-}
-
-async function sendModNotification() {
-	const { canceled, result: comment } = await os.inputText({
-		title: "Moderation Notification 運営からの通知",
-	});
-	if (canceled) return;
-	await os.api('admin/send-notification', {
-		comment: comment,
-		userId: user.id,
-	});
-	os.success();
-}
-
 watch(() => props.userId, () => {
 	init = createFetcher();
 }, {
@@ -471,29 +407,28 @@ const headerActions = $computed(() => []);
 const headerTabs = $computed(() => [{
 	key: 'overview',
 	title: i18n.ts.overview,
-	icon: 'fas fa-info-circle',
-}, (iAmModerator && enableSudo) ? {
+	icon: 'ti ti-info-circle',
+}, iAmModerator ? {
 	key: 'moderation',
 	title: i18n.ts.moderation,
-	icon: 'fas fa-shield-halved',
+	icon: 'ti ti-user-exclamation',
 } : null, {
 	key: 'chart',
 	title: i18n.ts.charts,
-	icon: 'fas fa-chart-simple',
+	icon: 'ti ti-chart-line',
 }, {
 	key: 'raw',
 	title: 'Raw',
-	icon: 'fas fa-code',
+	icon: 'ti ti-code',
 }].filter(x => x != null));
 
 definePageMetadata(computed(() => ({
 	title: user ? acct(user) : i18n.ts.userInfo,
-	icon: 'fas fa-info-circle',
+	icon: 'ti ti-info-circle',
 })));
 </script>
 
 <style lang="scss" scoped>
-@use "sass:math";
 .aeakzknw {
 	display: flex;
 	align-items: center;
@@ -537,7 +472,7 @@ definePageMetadata(computed(() => ({
 				display: none;
 			}
 
-			> .suspended, > .silenced, > .moderator {
+			> .suspended, > .silenced, > .moderator, > .admin {
 				display: inline-block;
 				border: solid 1px;
 				border-radius: 6px;
@@ -559,6 +494,12 @@ definePageMetadata(computed(() => ({
 				color: var(--success);
 				border-color: var(--success);
 			}
+
+			> .admin {
+				color: var(--fgOnAccent);
+				border-color: var(--accent);
+				background-color: var(--accent);
+			}
 		}
 	}
 }
@@ -573,21 +514,6 @@ definePageMetadata(computed(() => ({
 		> .label {
 			margin-bottom: 12px;
 			font-weight: bold;
-		}
-	}
-}
-
-.uawsfosz {
-
-	> .meter {
-		$size: 12px;
-		background: rgba(0, 0, 0, 0.1);
-		border-radius: math.div($size, 2);
-		overflow: hidden;
-
-		> div {
-			height: $size;
-			border-radius: math.div($size, 2);
 		}
 	}
 }

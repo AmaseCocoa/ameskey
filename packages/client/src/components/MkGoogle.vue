@@ -1,7 +1,7 @@
 <template>
 <div class="mk-google">
 	<input v-model="query" type="search" :placeholder="q">
-	<button @click="search"><i class="fas fa-search"></i> {{ $ts.searchByGoogle }}</button>
+	<button @click="search"><i class="ti ti-search"></i> {{ $ts.searchByGoogle }}</button>
 </div>
 </template>
 
@@ -15,9 +15,7 @@ const props = defineProps<{
 const query = ref(props.q);
 
 const search = () => {
-	const sp = new URLSearchParams();
-	sp.append('q', query.value);
-	window.open(`https://www.google.com/search?${sp.toString()}`, '_blank');
+	window.open(`https://www.google.com/search?q=${query.value}`, '_blank');
 };
 </script>
 

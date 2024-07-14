@@ -9,11 +9,8 @@
 					<Mfm :text="announcement.text"/>
 					<img v-if="announcement.imageUrl" :src="announcement.imageUrl"/>
 				</div>
-				<div class="footer">
-					<div><i class="far fa-clock"></i> {{ $ts.createdAt }}: <MkTime :time="announcement.createdAt" mode="detail"/></div>
-				</div>
 				<div v-if="$i && !announcement.isRead" class="_footer">
-					<MkButton primary @click="read(items, announcement, i)"><i class="fas fa-check"></i> {{ $ts.gotIt }}</MkButton>
+					<MkButton primary @click="read(items, announcement, i)"><i class="ti ti-check"></i> {{ $ts.gotIt }}</MkButton>
 				</div>
 			</section>
 		</MkPagination>
@@ -49,7 +46,7 @@ const headerTabs = $computed(() => []);
 
 definePageMetadata({
 	title: i18n.ts.announcements,
-	icon: 'fas fa-broadcast-tower',
+	icon: 'ti ti-speakerphone',
 });
 </script>
 
@@ -66,11 +63,6 @@ definePageMetadata({
 				max-height: 300px;
 				max-width: 100%;
 			}
-		}
-		> .footer {
-			margin: var(--margin) 0 var(--margin) 0;
-			font-size: 85%;
-			opacity: 0.75;
 		}
 	}
 }

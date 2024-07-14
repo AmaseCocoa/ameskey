@@ -1,9 +1,8 @@
 import { AsyncComponentLoader, defineAsyncComponent, inject } from 'vue';
 import { Router } from '@/nirax';
-import { $i, iAmModerator, iAmAdmin } from '@/account';
+import { $i, iAmModerator } from '@/account';
 import MkLoading from '@/pages/_loading_.vue';
 import MkError from '@/pages/_error_.vue';
-import { ui } from '@/config';
 
 const page = (loader: AsyncComponentLoader<any>) => defineAsyncComponent({
 	loader: loader,
@@ -162,10 +161,6 @@ export const routes = [{
 		name: 'general',
 		component: page(() => import('./pages/settings/custom-css.vue')),
 	}, {
-		path: '/timeline',
-		name: 'timeline',
-		component: page(() => import('./pages/settings/timeline.vue')),
-	}, {
 		path: '/accounts',
 		name: 'profile',
 		component: page(() => import('./pages/settings/accounts.vue')),
@@ -181,6 +176,10 @@ export const routes = [{
 		path: '/other',
 		name: 'other',
 		component: page(() => import('./pages/settings/other.vue')),
+	}, {
+		path: '/taiyme-services',
+		name: 'taiyme-services',
+		component: page(() => import('./pages/settings/taiyme-services.vue')),
 	}, {
 		path: '/',
 		component: page(() => import('./pages/_empty_.vue')),
@@ -202,9 +201,6 @@ export const routes = [{
 	path: '/about-misskey',
 	component: page(() => import('./pages/about-misskey.vue')),
 }, {
-	path: '/ads',
-	component: page(() => import('./pages/ads.vue')),
-}, {
 	path: '/theme-editor',
 	component: page(() => import('./pages/theme-editor.vue')),
 	loginRequired: true,
@@ -220,6 +216,8 @@ export const routes = [{
 	query: {
 		q: 'query',
 		channel: 'channel',
+		type: 'type',
+		origin: 'origin',
 	},
 }, {
 	path: '/authorize-follow',
@@ -348,25 +346,21 @@ export const routes = [{
 		name: 'abuses',
 		component: page(() => import('./pages/admin/abuses.vue')),
 	}, {
-		path: '/moderation-logs',
-		name: 'moderation-logs',
-		component: page(() => import('./pages/admin/moderation-logs.vue')),
-	}, {
 		path: '/settings',
 		name: 'settings',
-		component: iAmAdmin ? page(() => import('./pages/admin/settings.vue')) : page(() => import('./pages/not-found.vue')),
+		component: page(() => import('./pages/admin/settings.vue')),
 	}, {
 		path: '/email-settings',
 		name: 'email-settings',
-		component: iAmAdmin ? page(() => import('./pages/admin/email-settings.vue')) : page(() => import('./pages/not-found.vue')),
+		component: page(() => import('./pages/admin/email-settings.vue')),
 	}, {
 		path: '/object-storage',
 		name: 'object-storage',
-		component: iAmAdmin ? page(() => import('./pages/admin/object-storage.vue')) : page(() => import('./pages/not-found.vue')),
+		component: page(() => import('./pages/admin/object-storage.vue')),
 	}, {
 		path: '/security',
 		name: 'security',
-		component: iAmAdmin ? page(() => import('./pages/admin/security.vue')) : page(() => import('./pages/not-found.vue')),
+		component: page(() => import('./pages/admin/security.vue')),
 	}, {
 		path: '/relays',
 		name: 'relays',
@@ -374,23 +368,19 @@ export const routes = [{
 	}, {
 		path: '/integrations',
 		name: 'integrations',
-		component: iAmAdmin ? page(() => import('./pages/admin/integrations.vue')) : page(() => import('./pages/not-found.vue')),
+		component: page(() => import('./pages/admin/integrations.vue')),
 	}, {
 		path: '/instance-block',
 		name: 'instance-block',
-		component: iAmAdmin ? page(() => import('./pages/admin/instance-block.vue')) : page(() => import('./pages/not-found.vue')),
-	}, {
-		path: '/email-block',
-		name: 'email-block',
-		component: iAmAdmin ? page(() => import('./pages/admin/email-block.vue')) : page(() => import('./pages/not-found.vue')),
+		component: page(() => import('./pages/admin/instance-block.vue')),
 	}, {
 		path: '/proxy-account',
 		name: 'proxy-account',
-		component: iAmAdmin ? page(() => import('./pages/admin/proxy-account.vue')) : page(() => import('./pages/not-found.vue')),
+		component: page(() => import('./pages/admin/proxy-account.vue')),
 	}, {
 		path: '/other-settings',
 		name: 'other-settings',
-		component: iAmAdmin ? page(() => import('./pages/admin/other-settings.vue')) : page(() => import('./pages/not-found.vue')),
+		component: page(() => import('./pages/admin/other-settings.vue')),
 	}, {
 		path: '/',
 		component: page(() => import('./pages/_empty_.vue')),
@@ -417,14 +407,6 @@ export const routes = [{
 	component: page(() => import('./pages/messaging/messaging-room.vue')),
 	loginRequired: true,
 }, {
-	path: '/my/groups/',
-	component: page(() => import('./pages/my-groups/index.vue')),
-	loginRequired: true,
-}, {
-	path: '/my/groups/:groupId',
-	component: page(() => import('./pages/my-groups/group.vue')),
-	loginRequired: true,
-}, {
 	path: '/my/drive/folder/:folder',
 	component: page(() => import('./pages/drive.vue')),
 	loginRequired: true,
@@ -447,6 +429,14 @@ export const routes = [{
 }, {
 	path: '/my/clips',
 	component: page(() => import('./pages/my-clips/index.vue')),
+	loginRequired: true,
+}, {
+	path: '/my/groups',
+	component: page(() => import('./pages/my-groups/index.vue')),
+	loginRequired: true,
+}, {
+	path: '/my/groups/:groupId',
+	component: page(() => import('./pages/my-groups/group.vue')),
 	loginRequired: true,
 }, {
 	path: '/my/antennas/create',

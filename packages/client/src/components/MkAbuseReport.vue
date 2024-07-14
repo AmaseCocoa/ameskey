@@ -1,10 +1,10 @@
 <template>
 <div class="bcekxzvu _gap _panel">
-	<div class="target">
+	<div class="item target">
 		<MkA v-user-preview="report.targetUserId" class="info" :to="`/user-info/${report.targetUserId}`">
 			<MkAvatar class="avatar" :user="report.targetUser" :show-indicator="true" :disable-link="true"/>
 			<div class="names">
-				<MkUserName class="name" :user="report.targetUser"/>
+				<MkUserName :nowrap="false" class="name" :user="report.targetUser"/>
 				<MkAcct class="acct" :user="report.targetUser" style="display: block;"/>
 			</div>
 		</MkA>
@@ -13,11 +13,10 @@
 			<template #value>{{ new Date(report.targetUser.createdAt).toLocaleString() }} (<MkTime :time="report.targetUser.createdAt"/>)</template>
 		</MkKeyValue>
 	</div>
-	<div class="detail">
-		<div>
-			<Mfm :text="report.comment"/>
-		</div>
-		<hr/>
+	<div class="item report">
+		<Mfm :text="report.comment"/>
+	</div>
+	<div class="item detail">
 		<div>{{ i18n.ts.reporter }}: <MkAcct :user="report.reporter"/></div>
 		<div v-if="report.assignee">
 			{{ i18n.ts.moderator }}:
@@ -39,7 +38,6 @@
 import MkButton from '@/components/MkButton.vue';
 import MkSwitch from '@/components/form/switch.vue';
 import MkKeyValue from '@/components/MkKeyValue.vue';
-import { acct, userPage } from '@/filters/user';
 import * as os from '@/os';
 import { i18n } from '@/i18n';
 
@@ -54,32 +52,39 @@ const emit = defineEmits<{
 let forward = $ref(props.report.forwarded);
 
 function resolve() {
-	os.confirm({
-		type: 'warning',
-		text: i18n.t('resolveAreYouSure', { x: props.report.comment }),
-	}).then(({ canceled }) => {
-		if (canceled) return;
-		os.apiWithDialog('admin/resolve-abuse-user-report', {
-			forward: forward,
-			reportId: props.report.id,
-		}).then(() => {
-			emit('resolved', props.report.id);
-		});
-});
+	os.apiWithDialog('admin/resolve-abuse-user-report', {
+		forward: forward,
+		reportId: props.report.id,
+	}).then(() => {
+		emit('resolved', props.report.id);
+	});
 }
 </script>
 
 <style lang="scss" scoped>
 .bcekxzvu {
-	display: flex;
+	display: block;
 
-	> .target {
-		width: 35%;
+	> .item {
 		box-sizing: border-box;
 		text-align: left;
 		padding: 24px;
-		border-right: solid 1px var(--divider);
+		border-bottom: solid 1px var(--divider);
 
+		&:last-child {
+			border-bottom: none;
+		}
+
+		> * {
+			margin-bottom: 8px;
+
+			&:last-child {
+				margin-bottom: 0;
+			}
+		}
+	}
+
+	> .target {
 		> .info {
 			display: flex;
 			box-sizing: border-box;
@@ -107,9 +112,17 @@ function resolve() {
 		}
 	}
 
+	> .report {
+	}
+
 	> .detail {
-		flex: 1;
-		padding: 24px;
+		> * {
+			margin-bottom: 0;
+		}
+
+		> .action {
+			margin-top: 8px;
+		}
 	}
 }
 </style>

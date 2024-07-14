@@ -7,7 +7,7 @@
 	@dragleave="onDragleave"
 	@drop.stop="onDrop"
 >
-	<i v-if="folder == null" class="fas fa-cloud"></i>
+	<i v-if="folder == null" class="ti ti-cloud"></i>
 	<span>{{ folder == null ? i18n.ts.drive : folder.name }}</span>
 </div>
 </template>
@@ -17,6 +17,7 @@ import { ref } from 'vue';
 import * as Misskey from 'misskey-js';
 import * as os from '@/os';
 import { i18n } from '@/i18n';
+import { parseObject } from '@/scripts/tms/parse';
 
 const props = defineProps<{
 	folder?: Misskey.entities.DriveFolder;
@@ -58,22 +59,7 @@ function onDragover(ev: DragEvent) {
 	const isDriveFolder = ev.dataTransfer.types[0] === _DATA_TRANSFER_DRIVE_FOLDER_;
 
 	if (isFile || isDriveFile || isDriveFolder) {
-		switch (ev.dataTransfer.effectAllowed) {
-			case 'all':
-			case 'uninitialized':
-			case 'copy': 
-			case 'copyLink': 
-			case 'copyMove': 
-				ev.dataTransfer.dropEffect = 'copy';
-				break;
-			case 'linkMove':
-			case 'move':
-				ev.dataTransfer.dropEffect = 'move';
-				break;
-			default:
-				ev.dataTransfer.dropEffect = 'none';
-				break;
-		}
+		ev.dataTransfer.dropEffect = ev.dataTransfer.effectAllowed === 'all' ? 'copy' : 'move';
 	} else {
 		ev.dataTransfer.dropEffect = 'none';
 	}
@@ -105,7 +91,7 @@ function onDrop(ev: DragEvent) {
 	//#region ドライブのファイル
 	const driveFile = ev.dataTransfer.getData(_DATA_TRANSFER_DRIVE_FILE_);
 	if (driveFile != null && driveFile !== '') {
-		const file = JSON.parse(driveFile);
+		const file = parseObject<Misskey.entities.DriveFile>(driveFile);
 		emit('removeFile', file.id);
 		os.api('drive/files/update', {
 			fileId: file.id,
@@ -117,7 +103,7 @@ function onDrop(ev: DragEvent) {
 	//#region ドライブのフォルダ
 	const driveFolder = ev.dataTransfer.getData(_DATA_TRANSFER_DRIVE_FOLDER_);
 	if (driveFolder != null && driveFolder !== '') {
-		const folder = JSON.parse(driveFolder);
+		const folder = parseObject<Misskey.entities.DriveFolder>(driveFolder);
 		// 移動先が自分自身ならreject
 		if (props.folder && folder.id === props.folder.id) return;
 		emit('removeFolder', folder.id);

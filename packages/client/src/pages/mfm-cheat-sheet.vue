@@ -312,7 +312,7 @@
 </template>
 
 <script lang="ts" setup>
-import { defineComponent } from 'vue';
+import { } from 'vue';
 import MkTextarea from '@/components/form/textarea.vue';
 import { definePageMetadata } from '@/scripts/page-metadata';
 import { i18n } from '@/i18n';
@@ -322,7 +322,7 @@ let preview_mention = $ref('@example');
 let preview_hashtag = $ref('#test');
 let preview_url = $ref('https://example.com');
 let preview_link = $ref(`[${i18n.ts._mfm.dummy}](https://example.com)`);
-let preview_emoji = $ref(instance.emojis.length ? `:${instance.emojis[0].name}:` : ':emojiname:');
+let preview_emoji = $ref(instance.emojis?.length ? `:${instance.emojis[0].name}:` : ':emojiname:');
 let preview_bold = $ref(`**${i18n.ts._mfm.dummy}**`);
 let preview_small = $ref(`<small>${i18n.ts._mfm.dummy}</small>`);
 let preview_center = $ref(`<center>${i18n.ts._mfm.dummy}</center>`);
@@ -351,7 +351,7 @@ let preview_plain = $ref('<plain>**bold** @mention #hashtag `code` $[x2 🍮]</p
 
 definePageMetadata({
 	title: i18n.ts._mfm.cheatSheet,
-	icon: 'fas fa-question-circle',
+	icon: 'ti ti-question-circle',
 });
 </script>
 

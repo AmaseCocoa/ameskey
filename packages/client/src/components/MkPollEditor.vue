@@ -1,14 +1,14 @@
 <template>
 <div class="zmdxowus">
 	<p v-if="choices.length < 2" class="caution">
-		<i class="fas fa-exclamation-triangle"></i>{{ i18n.ts._poll.noOnlyOneChoice }}
+		<i class="ti ti-alert-triangle"></i>{{ i18n.ts._poll.noOnlyOneChoice }}
 	</p>
 	<ul>
 		<li v-for="(choice, i) in choices" :key="i">
-			<MkInput class="input" small :model-value="choice" :placeholder="$t('_poll.choiceN', { n: i + 1 })" @update:modelValue="onInput(i, $event)">
+			<MkInput class="input" small :model-value="choice" :placeholder="i18n.t('_poll.choiceN', { n: i + 1 })" @update:model-value="onInput(i, $event)">
 			</MkInput>
 			<button class="_button" @click="remove(i)">
-				<i class="fas fa-times"></i>
+				<i class="ti ti-x"></i>
 			</button>
 		</li>
 	</ul>
@@ -92,28 +92,28 @@ if (props.modelValue.expiresAt) {
 	expiration.value = 'infinite';
 }
 
-function onInput(i, value) {
+const onInput = (i: number, value: string): void => {
 	choices.value[i] = value;
-}
+};
 
-function add() {
+const add = (): void => {
 	choices.value.push('');
 	// TODO
 	// nextTick(() => {
 	//   (this.$refs.choices as any).childNodes[this.choices.length - 1].childNodes[0].focus();
 	// });
-}
+};
 
-function remove(i) {
+const remove = (i: number): void => {
 	choices.value = choices.value.filter((_, _i) => _i !== i);
-}
+};
 
-function get() {
-	const calcAt = () => {
+const get = (): unknown => {
+	const calcAt = (): unknown => {
 		return new Date(`${atDate.value} ${atTime.value}`).getTime();
 	};
 
-	const calcAfter = () => {
+	const calcAfter = (): unknown => {
 		let base = parseInt(after.value);
 		switch (unit.value) {
 			case 'day': base *= 24;
@@ -135,7 +135,7 @@ function get() {
 			expiration.value === 'after' ? { expiredAfter: calcAfter() } : {}
 		),
 	};
-}
+};
 
 watch([choices, multiple, expiration, atDate, atTime, after, unit], () => emit('update:modelValue', get()), {
 	deep: true,

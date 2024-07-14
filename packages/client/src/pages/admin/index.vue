@@ -1,6 +1,6 @@
 <template>
 <div ref="el" class="hiyeyicy" :class="{ wide: !narrow }">
-	<div v-if="!narrow || currentPage?.route.name == null" class="nav">
+	<div v-if="!narrow || currentPage?.route.name == null" class="nav">	
 		<MkSpacer :content-max="700" :margin-min="16">
 			<div class="lxpfedzu">
 				<div class="banner">
@@ -12,7 +12,6 @@
 				<MkInfo v-if="noBotProtection" warn class="info">{{ i18n.ts.noBotProtectionWarning }} <MkA to="/admin/security" class="_link">{{ i18n.ts.configure }}</MkA></MkInfo>
 				<MkInfo v-if="noEmailServer" warn class="info">{{ i18n.ts.noEmailServerWarning }} <MkA to="/admin/email-settings" class="_link">{{ i18n.ts.configure }}</MkA></MkInfo>
 
-				<FormSwitch v-model="moderator" class="_formBlock" @update:modelValue="toggleModerator">{{ i18n.ts.moderator }}</FormSwitch>
 				<MkSuperMenu :def="menuDef" :grid="currentPage?.route.name == null"></MkSuperMenu>
 			</div>
 		</MkSpacer>
@@ -24,20 +23,18 @@
 </template>
 
 <script lang="ts" setup>
-import { defineAsyncComponent, inject, nextTick, onMounted, onUnmounted, provide, watch } from 'vue';
+import { onMounted, onUnmounted, provide, watch } from 'vue';
 import { i18n } from '@/i18n';
 import MkSuperMenu from '@/components/MkSuperMenu.vue';
 import MkInfo from '@/components/MkInfo.vue';
-import { scroll } from '@/scripts/scroll';
 import { instance } from '@/instance';
 import * as os from '@/os';
-import { lookupUser, lookupUserByEmail } from '@/scripts/lookup-user';
+import { lookupUser } from '@/scripts/lookup-user';
+import { lookupNote } from '@/scripts/lookup-note';
+import { lookupFile } from '@/scripts/lookup-file';
+import { lookupInstance } from '@/scripts/lookup-instance';
 import { useRouter } from '@/router';
-import { definePageMetadata, provideMetadataReceiver, setPageMetadata } from '@/scripts/page-metadata';
-import { defaultStore } from '@/store';
-import FormSwitch from '@/components/form/switch.vue';
-import { unisonReload } from '@/scripts/unison-reload';
-import { iAmAdmin } from '@/account';
+import { definePageMetadata, provideMetadataReceiver } from '@/scripts/page-metadata';
 
 const isEmpty = (x: string | null) => x == null || x === '';
 
@@ -45,7 +42,7 @@ const router = useRouter();
 
 const indexInfo = {
 	title: i18n.ts.controlPanel,
-	icon: 'fas fa-cog',
+	icon: 'ti ti-settings',
 	hideHeader: true,
 };
 
@@ -62,9 +59,6 @@ let noBotProtection = !instance.disableRegistration && !instance.enableHcaptcha 
 let noEmailServer = !instance.enableEmail;
 let thereIsUnresolvedAbuseReport = $ref(false);
 let currentPage = $computed(() => router.currentRef.value.child);
-let moderator = $ref(false);
-
-moderator = defaultStore.state.enableSudo;
 
 os.api('admin/abuse-user-reports', {
 	state: 'unresolved',
@@ -83,125 +77,115 @@ const menuDef = $computed(() => [{
 	title: i18n.ts.quickAction,
 	items: [{
 		type: 'button',
-		icon: 'fas fa-search',
+		icon: 'ti ti-search',
 		text: i18n.ts.lookup,
 		action: lookup,
 	}, ...(instance.disableRegistration ? [{
 		type: 'button',
-		icon: 'fas fa-user',
+		icon: 'ti ti-user',
 		text: i18n.ts.invite,
 		action: invite,
 	}] : [])],
 }, {
 	title: i18n.ts.administration,
 	items: [{
-		icon: 'fas fa-tachometer-alt',
+		icon: 'ti ti-dashboard',
 		text: i18n.ts.dashboard,
 		to: '/admin/overview',
 		active: currentPage?.route.name === 'overview',
 	}, {
-		icon: 'fas fa-users',
+		icon: 'ti ti-users',
 		text: i18n.ts.users,
 		to: '/admin/users',
 		active: currentPage?.route.name === 'users',
 	}, {
-		icon: 'fas fa-laugh',
+		icon: 'ti ti-mood-happy',
 		text: i18n.ts.customEmojis,
 		to: '/admin/emojis',
 		active: currentPage?.route.name === 'emojis',
 	}, {
-		icon: 'fas fa-globe',
+		icon: 'ti ti-whirl',
 		text: i18n.ts.federation,
 		to: '/about#federation',
 		active: currentPage?.route.name === 'federation',
 	}, {
-		icon: 'fas fa-clipboard-list',
+		icon: 'ti ti-clock-play',
 		text: i18n.ts.jobQueue,
 		to: '/admin/queue',
 		active: currentPage?.route.name === 'queue',
 	}, {
-		icon: 'fas fa-cloud',
+		icon: 'ti ti-cloud',
 		text: i18n.ts.files,
 		to: '/admin/files',
 		active: currentPage?.route.name === 'files',
 	}, {
-		icon: 'fas fa-broadcast-tower',
+		icon: 'ti ti-speakerphone',
 		text: i18n.ts.announcements,
 		to: '/admin/announcements',
 		active: currentPage?.route.name === 'announcements',
 	}, {
-		icon: 'fas fa-audio-description',
+		icon: 'ti ti-ad',
 		text: i18n.ts.ads,
 		to: '/admin/ads',
 		active: currentPage?.route.name === 'ads',
 	}, {
-		icon: 'fas fa-exclamation-circle',
+		icon: 'ti ti-exclamation-circle',
 		text: i18n.ts.abuseReports,
 		to: '/admin/abuses',
 		active: currentPage?.route.name === 'abuses',
-	}, {
-		icon: 'fas fa-clock-rotate-left',
-		text: i18n.ts.moderationlogs,
-		to: '/admin/moderation-logs',
-		active: currentPage?.route.name === 'moderation-logs',
 	}],
 }, {
 	title: i18n.ts.settings,
-	items: [...(iAmAdmin ? [{
-		icon: 'fas fa-cog',
+	items: [{
+		icon: 'ti ti-settings',
 		text: i18n.ts.general,
 		to: '/admin/settings',
 		active: currentPage?.route.name === 'settings',
 	}, {
-		icon: 'fas fa-envelope',
+		icon: 'ti ti-mail',
 		text: i18n.ts.emailServer,
 		to: '/admin/email-settings',
 		active: currentPage?.route.name === 'email-settings',
 	}, {
-		icon: 'fas fa-cloud',
+		icon: 'ti ti-cloud',
 		text: i18n.ts.objectStorage,
 		to: '/admin/object-storage',
 		active: currentPage?.route.name === 'object-storage',
 	}, {
-		icon: 'fas fa-lock',
+		icon: 'ti ti-lock',
 		text: i18n.ts.security,
 		to: '/admin/security',
 		active: currentPage?.route.name === 'security',
-	}] : []), {
-		icon: 'fas fa-globe',
+	}, {
+		icon: 'ti ti-planet',
 		text: i18n.ts.relays,
 		to: '/admin/relays',
 		active: currentPage?.route.name === 'relays',
-	}, ...(iAmAdmin ? [{
-		icon: 'fas fa-share-alt',
+	}, {
+		icon: 'ti ti-share',
 		text: i18n.ts.integration,
 		to: '/admin/integrations',
 		active: currentPage?.route.name === 'integrations',
 	}, {
-		icon: 'fas fa-ban',
+		icon: 'ti ti-ban',
 		text: i18n.ts.instanceBlocking,
 		to: '/admin/instance-block',
 		active: currentPage?.route.name === 'instance-block',
 	}, {
-		icon: 'fas fa-ban',
-		text: i18n.ts.emailDomainBlocking,
-		to: '/admin/email-block',
-		active: currentPage?.route.name === 'email-block',
-	}, {
-		icon: 'fas fa-ghost',
+		icon: 'ti ti-ghost',
 		text: i18n.ts.proxyAccount,
 		to: '/admin/proxy-account',
 		active: currentPage?.route.name === 'proxy-account',
 	}, {
-		icon: 'fas fa-cogs',
+		icon: 'ti ti-adjustments',
 		text: i18n.ts.other,
 		to: '/admin/other-settings',
 		active: currentPage?.route.name === 'other-settings',
-	}] : [])],
+	}],
 }, {
 	title: i18n.ts.info,
 	items: [{
-		icon: 'fas fa-database',
+		icon: 'ti ti-database',
 		text: i18n.ts.database,
 		to: '/admin/database',
 		active: currentPage?.route.name === 'database',
@@ -235,30 +219,6 @@ provideMetadataReceiver((info) => {
 	}
 });
 
-async function toggleModerator(v) {
-	const confirm = await os.confirm({
-		type: 'warning',
-		text: v ? i18n.ts.sudoConfirm : i18n.ts.unsudoConfirm,
-	});
-	if (confirm.canceled) {
-		moderator = !v;
-	} else {
-		if (v) {
-			await defaultStore.set('enableSudo', true);
-			await os.alert({
-				text: i18n.ts.sudoActivated,
-			});
-			await unisonReload();
-		} else {
-			await defaultStore.set('enableSudo', false);
-			await os.alert({
-				text: i18n.ts.sudoDeactivated,
-			});
-			await unisonReload();
-		}
-	}
-}
-
 const invite = () => {
 	os.api('admin/invite').then(x => {
 		os.alert({
@@ -276,15 +236,27 @@ const invite = () => {
 const lookup = (ev) => {
 	os.popupMenu([{
 		text: i18n.ts.user,
-		icon: 'fas fa-user',
+		icon: 'ti ti-user',
 		action: () => {
 			lookupUser();
 		},
 	}, {
-		text: `${i18n.ts.user} (${i18n.ts.email})`,
-		icon: 'fas fa-user',
+		text: i18n.ts.note,
+		icon: 'ti ti-pencil',
 		action: () => {
-			lookupUserByEmail();
+			lookupNote();
+		},
+	}, {
+		text: i18n.ts.file,
+		icon: 'ti ti-cloud',
+		action: () => {
+			lookupFile();
+		},
+	}, {
+		text: i18n.ts.instance,
+		icon: 'ti ti-planet',
+		action: () => {
+			lookupInstance();
 		},
 	}], ev.currentTarget ?? ev.target);
 };

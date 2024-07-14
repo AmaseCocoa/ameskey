@@ -10,18 +10,18 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref, watch, PropType, onBeforeUnmount } from 'vue';
+import { onMounted, watch, onBeforeUnmount } from 'vue';
 import tinycolor from 'tinycolor2';
 
 const loaded = !!window.TagCanvas;
 const SAFE_FOR_HTML_ID = 'abcdefghijklmnopqrstuvwxyz';
 const computedStyle = getComputedStyle(document.documentElement);
-const idForCanvas = Array.from({ length: 16 }, () => SAFE_FOR_HTML_ID[Math.floor(Math.random() * SAFE_FOR_HTML_ID.length)]).join('');
-const idForTags = Array.from({ length: 16 }, () => SAFE_FOR_HTML_ID[Math.floor(Math.random() * SAFE_FOR_HTML_ID.length)]).join('');
+const idForCanvas = Array.from(Array(16)).map(() => SAFE_FOR_HTML_ID[Math.floor(Math.random() * SAFE_FOR_HTML_ID.length)]).join('');
+const idForTags = Array.from(Array(16)).map(() => SAFE_FOR_HTML_ID[Math.floor(Math.random() * SAFE_FOR_HTML_ID.length)]).join('');
 let available = $ref(false);
-let rootEl = $shallowRef<HTMLElement | null>(null);
-let canvasEl = $shallowRef<HTMLCanvasElement | null>(null);
-let tagsEl = $shallowRef<HTMLElement | null>(null);
+let rootEl = $ref<HTMLElement | null>(null);
+let canvasEl = $ref<HTMLCanvasElement | null>(null);
+let tagsEl = $ref<HTMLElement | null>(null);
 let width = $ref(300);
 
 watch($$(available), () => {
@@ -47,7 +47,7 @@ watch($$(available), () => {
 });
 
 onMounted(() => {
-	width = rootEl.offsetWidth || 300;
+	width = rootEl.offsetWidth;
 
 	if (loaded) {
 		available = true;

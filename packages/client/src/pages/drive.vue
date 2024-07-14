@@ -7,7 +7,6 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 import XDrive from '@/components/MkDrive.vue';
-import * as os from '@/os';
 import { i18n } from '@/i18n';
 import { definePageMetadata } from '@/scripts/page-metadata';
 
@@ -19,7 +18,7 @@ const headerTabs = $computed(() => []);
 
 definePageMetadata(computed(() => ({
 	title: folder ? folder.name : i18n.ts.drive,
-	icon: 'fas fa-cloud',
+	icon: 'ti ti-cloud',
 	hideHeader: true,
 })));
 </script>

@@ -1,7 +1,7 @@
 <template>
 <div class="mkw-jobQueue _monospace" :class="{ _panel: !widgetProps.transparent }">
 	<div class="inbox">
-		<div class="label">Inbox queue<i v-if="current.inbox.waiting > 0" class="fas fa-exclamation-triangle icon"></i></div>
+		<div class="label">Inbox queue<i v-if="current.inbox.waiting > 0" class="ti ti-alert-triangle icon"></i></div>
 		<div class="values">
 			<div>
 				<div>Process</div>
@@ -22,7 +22,7 @@
 		</div>
 	</div>
 	<div class="deliver">
-		<div class="label">Deliver queue<i v-if="current.deliver.waiting > 0" class="fas fa-exclamation-triangle icon"></i></div>
+		<div class="label">Deliver queue<i v-if="current.deliver.waiting > 0" class="ti ti-alert-triangle icon"></i></div>
 		<div class="values">
 			<div>
 				<div>Process</div>
@@ -46,14 +46,14 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, onUnmounted, reactive, ref } from 'vue';
+import { onUnmounted, reactive } from 'vue';
+import { v4 as uuid } from 'uuid';
+import { useWidgetPropsManager, Widget, WidgetComponentExpose } from './widget';
 import { GetFormResultType } from '@/scripts/form';
-import { useWidgetPropsManager, Widget, WidgetComponentEmits, WidgetComponentExpose, WidgetComponentProps } from './widget';
 import { stream } from '@/stream';
 import number from '@/filters/number';
 import * as sound from '@/scripts/sound';
-import * as os from '@/os';
-import { ColdDeviceStorage } from '@/store';
+import { deepClone } from '@/scripts/clone';
 
 const name = 'jobQueue';
 
@@ -98,31 +98,22 @@ const current = reactive({
 	},
 });
 const prev = reactive({} as typeof current);
-let jammedAudioBuffer: AudioBuffer | null = $ref(null);
-let jammedSoundNodePlaying: boolean = $ref(false);
-if (ColdDeviceStorage.get('sound_masterVolume')) {
-	sound.loadAudio('syuilo/queue-jammed').then(buf => jammedAudioBuffer = buf);
-}
+const jammedSound = sound.setVolume(sound.getAudio('syuilo/queue-jammed'), 1);
 
 for (const domain of ['inbox', 'deliver']) {
-	prev[domain] = JSON.parse(JSON.stringify(current[domain]));
+	prev[domain] = deepClone(current[domain]);
 }
 
 const onStats = (stats) => {
 	for (const domain of ['inbox', 'deliver']) {
-		prev[domain] = JSON.parse(JSON.stringify(current[domain]));
+		prev[domain] = deepClone(current[domain]);
 		current[domain].activeSincePrevTick = stats[domain].activeSincePrevTick;
 		current[domain].active = stats[domain].active;
 		current[domain].waiting = stats[domain].waiting;
 		current[domain].delayed = stats[domain].delayed;
 
-		if (current[domain].waiting > 0 && widgetProps.sound && jammedAudioBuffer && !jammedSoundNodePlaying) {
-			const soundNode = sound.createSourceNode(jammedAudioBuffer, 1);
-			if (soundNode) {
-				jammedSoundNodePlaying = true;
-				soundNode.onended = () => jammedSoundNodePlaying = false;
-				soundNode.start();
-			}
+		if (current[domain].waiting > 0 && widgetProps.sound && jammedSound.paused) {
+			jammedSound.play();
 		}
 	}
 };
@@ -137,7 +128,7 @@ connection.on('stats', onStats);
 connection.on('statsLog', onStatsLog);
 
 connection.send('requestLog', {
-	id: Math.random().toString().substr(2, 8),
+	id: uuid(),
 	length: 1,
 });
 

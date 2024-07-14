@@ -10,7 +10,7 @@
 		@keydown.enter="toggle"
 	>
 	<span ref="button" v-adaptive-border v-tooltip="checked ? i18n.ts.itsOn : i18n.ts.itsOff" class="button" @click.prevent="toggle">
-		<i class="check fas fa-check"></i>
+		<i class="check ti ti-check"></i>
 	</span>
 	<span class="label">
 		<!-- TODO: 無名slotの方は廃止 -->
@@ -23,7 +23,7 @@
 <script lang="ts" setup>
 import { toRefs, Ref } from 'vue';
 import * as os from '@/os';
-import Ripple from '@/components/MkRipple.vue';
+import MkRippleEffect from '@/components/MkRippleEffect.vue';
 import { i18n } from '@/i18n';
 
 const props = defineProps<{
@@ -41,11 +41,11 @@ const toggle = () => {
 	if (props.disabled) return;
 	emit('update:modelValue', !checked.value);
 
-	if (!checked.value) {
+	if (!checked.value && button) {
 		const rect = button.getBoundingClientRect();
 		const x = rect.left + (button.offsetWidth / 2);
 		const y = rect.top + (button.offsetHeight / 2);
-		os.popup(Ripple, { x, y, particle: false }, {}, 'end');
+		os.popup(MkRippleEffect, { x, y, particle: false }, {}, 'end');
 	}
 };
 </script>

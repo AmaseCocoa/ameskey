@@ -3,7 +3,7 @@
 	<template #header><XHeader :actions="headerActions" :tabs="headerTabs"/></template>
 	<MkSpacer :content-max="900">
 		<div class="ztgjmzrw">
-			<section v-for="announcement in announcements" class="_card _gap announcements">
+			<section v-for="announcement in announcements" :key="announcement.id" class="_card _gap announcements">
 				<div class="_content announcement">
 					<MkInput v-model="announcement.title">
 						<template #label>{{ i18n.ts.title }}</template>
@@ -16,14 +16,11 @@
 					</MkInput>
 					<p v-if="announcement.reads">{{ i18n.t('nUsersRead', { n: announcement.reads }) }}</p>
 					<div class="buttons">
-						<MkButton class="button" inline primary @click="save(announcement)"><i class="fas fa-save"></i> {{ i18n.ts.save }}</MkButton>
-						<MkButton class="button" inline @click="remove(announcement)"><i class="fas fa-trash-alt"></i> {{ i18n.ts.remove }}</MkButton>
+						<MkButton class="button" inline primary @click="save(announcement)"><i class="ti ti-device-floppy"></i> {{ i18n.ts.save }}</MkButton>
+						<MkButton class="button" inline @click="remove(announcement)"><i class="ti ti-trash"></i> {{ i18n.ts.remove }}</MkButton>
 					</div>
 				</div>
 			</section>
-			<MkButton class="button" @click="more()">
-				<i class="fas fa-rotate-right"></i>{{ i18n.ts.more }}
-			</MkButton>
 		</div>
 	</MkSpacer>
 </MkStickyContainer>
@@ -72,7 +69,6 @@ function save(announcement) {
 				type: 'success',
 				text: i18n.ts.saved,
 			});
-			refresh();
 		}).catch(err => {
 			os.alert({
 				type: 'error',
@@ -94,21 +90,9 @@ function save(announcement) {
 	}
 }
 
-function refresh() {
-	os.api('admin/announcements/list').then(announcementResponse => {
-		announcements = announcementResponse;
-	});
-}
-
-function more() {
-	os.api('admin/announcements/list', { untilId: announcements.reduce((acc, announcement) => announcement.id != null ? announcement : acc).id }).then(announcementResponse => {
-		announcements = announcements.concat(announcementResponse);
-	});
-}
-
 const headerActions = $computed(() => [{
 	asFullButton: true,
-	icon: 'fas fa-plus',
+	icon: 'ti ti-plus',
 	text: i18n.ts.add,
 	handler: add,
 }]);
@@ -117,7 +101,7 @@ const headerTabs = $computed(() => []);
 
 definePageMetadata({
 	title: i18n.ts.announcements,
-	icon: 'fas fa-broadcast-tower',
+	icon: 'ti ti-speakerphone',
 });
 </script>
 

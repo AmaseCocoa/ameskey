@@ -43,6 +43,8 @@ import { $i } from '@/account';
 import { i18n } from '@/i18n';
 import { version, host } from '@/config';
 import { definePageMetadata } from '@/scripts/page-metadata';
+import { disableContextmenu } from '@/scripts/touch';
+import { parseObject } from '@/scripts/tms/parse';
 const { t, ts } = i18n;
 
 useCssModule();
@@ -222,7 +224,7 @@ function loadFile(): void {
 
 		let profile: Profile;
 		try {
-			profile = JSON.parse(await file.text()) as unknown as Profile;
+			profile = parseObject<Profile>(await file.text());
 			validate(profile);
 		} catch (err) {
 			return os.alert({
@@ -372,29 +374,30 @@ async function rename(id: string): Promise<void> {
 }
 
 function menu(ev: MouseEvent, profileId: string) {
+	if (disableContextmenu && ev.type === 'contextmenu') return;
 	if (!profiles) return;
 
 	return os.popupMenu([{
 		text: ts._preferencesBackups.apply,
-		icon: 'fas fa-circle-down',
+		icon: 'ti ti-check',
 		action: () => applyProfile(profileId),
 	}, {
 		type: 'a',
 		text: ts.download,
-		icon: 'fas fa-download',
+		icon: 'ti ti-download',
 		href: URL.createObjectURL(new Blob([JSON.stringify(profiles[profileId], null, 2)], { type: 'application/json' })),
 		download: `${profiles[profileId].name}.json`,
 	}, null, {
 		text: ts.rename,
-		icon: 'fas fa-i-cursor',
+		icon: 'ti ti-forms',
 		action: () => rename(profileId),
 	}, {
 		text: ts._preferencesBackups.save,
-		icon: 'fas fa-floppy-disk',
+		icon: 'ti ti-device-floppy',
 		action: () => save(profileId),
 	}, null, {
-		text: ts.delete,
-		icon: 'fas fa-trash-can',
+		text: ts.delete, // ts._preferencesBackups.deleteは定義されていない
+		icon: 'ti ti-trash',
 		action: () => deleteProfile(profileId),
 		danger: true,
 	}], ev.currentTarget ?? ev.target);
@@ -416,7 +419,7 @@ onUnmounted(() => {
 
 definePageMetadata(computed(() => ({
 	title: ts.preferencesBackups,
-	icon: 'fas fa-floppy-disk',
+	icon: 'ti ti-device-floppy',
 	bg: 'var(--bg)',
 })));
 </script>

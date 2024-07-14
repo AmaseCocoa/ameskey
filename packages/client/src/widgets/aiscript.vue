@@ -1,6 +1,6 @@
 <template>
 <MkContainer :show-header="widgetProps.showHeader" class="mkw-aiscript">
-	<template #header><i class="fas fa-terminal"></i>{{ i18n.ts._widgets.aiscript }}</template>
+	<template #header><i class="ti ti-terminal-2"></i>{{ i18n.ts._widgets.aiscript }}</template>
 
 	<div class="uylguesu _monospace">
 		<textarea v-model="widgetProps.script" placeholder="(1 + 1)"></textarea>
@@ -13,9 +13,10 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { ref } from 'vue';
+import { v4 as uuid } from 'uuid';
 import { AiScript, parse, utils } from '@syuilo/aiscript';
-import { useWidgetPropsManager, Widget, WidgetComponentEmits, WidgetComponentExpose, WidgetComponentProps } from './widget';
+import { useWidgetPropsManager, Widget, WidgetComponentExpose } from './widget';
 import { GetFormResultType } from '@/scripts/form';
 import * as os from '@/os';
 import MkContainer from '@/components/MkContainer.vue';
@@ -75,7 +76,7 @@ const run = async () => {
 		},
 		out: (value) => {
 			logs.value.push({
-				id: Math.random().toString(),
+				id: uuid(),
 				text: value.type === 'str' ? value.value : utils.valToString(value),
 				print: true,
 			});
@@ -83,7 +84,7 @@ const run = async () => {
 		log: (type, params) => {
 			switch (type) {
 				case 'end': logs.value.push({
-					id: Math.random().toString(),
+					id: uuid(),
 					text: utils.valToString(params.val, true),
 					print: false,
 				}); break;

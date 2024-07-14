@@ -4,34 +4,34 @@
 	"codename": "indigo",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/atsu1125/misskey-v12.git"
+		"url": "https://github.com/AmaseCocoa/ameskey.git"
 	},
 	"engines": {
-    "node": ">= 16.0.0"
-  },
+		"node": ">= 16.0.0"
+	},
 	"private": true,
+	"packageManager": "pnpm@8.6.0",
 	"scripts": {
-		"postinstall": "node ./scripts/install-packages.js",
-		"build": "node ./scripts/build.js",
+		"build-pre": "node ./scripts/build-pre.js",
+		"build": "pnpm build-pre && pnpm -r build && pnpm gulp",
 		"start": "cd packages/backend && node --experimental-json-modules ./built/index.js",
 		"start:test": "cd packages/backend && cross-env NODE_ENV=test node --experimental-json-modules ./built/index.js",
-		"init": "npm run migrate",
-		"migrate": "cd packages/backend && npx typeorm migration:run -d ormconfig.js",
-		"migrateandstart": "npm run migrate && npm run start",
-		"revert": "cd packages/backend && npx typeorm migration:revert -d ormconfig.js",
-		"gulp": "gulp build",
-		"watch": "npm run dev",
-		"dev": "node ./scripts/dev.js",
-		"lint": "node ./scripts/lint.js",
-		"cy:open": "cypress open --browser --e2e --config-file=cypress.config.ts",
-		"cy:run": "cypress run",
-		"e2e": "start-server-and-test start:test http://localhost:61812 cy:run",
+		"init": "pnpm migrate",
+		"migrate": "cd packages/backend && pnpm migrate",
+		"migrateandstart": "pnpm migrate && pnpm start",
+		"gulp": "pnpm exec gulp build",
+		"watch": "pnpm dev",
+		"dev": "NODE_ENV=developement node ./scripts/dev.js",
+		"lint": "pnpm -r lint",
+		"cy:open": "pnpm cypress open --browser --e2e --config-file=cypress.config.ts",
+		"cy:run": "pnpm cypress run",
+		"e2e": "pnpm start-server-and-test start:test http://localhost:61812 cy:run",
 		"mocha": "cd packages/backend && cross-env NODE_ENV=test TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true TS_NODE_PROJECT=\"./test/tsconfig.json\" npx mocha",
-		"test": "npm run mocha",
-		"format": "gulp format",
+		"test": "pnpm run mocha",
+		"format": "pnpm exec gulp format",
 		"clean": "node ./scripts/clean.js",
 		"clean-all": "node ./scripts/clean-all.js",
-		"cleanall": "npm run clean-all"
+		"cleanall": "pnpm clean-all"
 	},
 	"dependencies": {
 		"execa": "5.1.1",

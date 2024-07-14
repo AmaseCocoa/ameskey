@@ -26,7 +26,7 @@
 </template>
 
 <script lang="ts" setup>
-import { nextTick, onMounted } from 'vue';
+import { onMounted } from 'vue';
 import * as misskey from 'misskey-js';
 import Cropper from 'cropperjs';
 import tinycolor from 'tinycolor2';
@@ -34,9 +34,9 @@ import XModalWindow from '@/components/MkModalWindow.vue';
 import * as os from '@/os';
 import { $i } from '@/account';
 import { defaultStore } from '@/store';
-import { apiUrl } from '@/config';
+import { apiUrl, url } from '@/config';
+import { query } from '@/scripts/url';
 import { i18n } from '@/i18n';
-import { getProxiedImageUrl } from '@/scripts/media-proxy';
 
 const emit = defineEmits<{
 	(ev: 'ok', cropped: misskey.entities.DriveFile): void;
@@ -49,7 +49,9 @@ const props = defineProps<{
 	aspectRatio: number;
 }>();
 
-const imgUrl = getProxiedImageUrl(props.file.url);
+const imgUrl = `${url}/proxy/image.webp?${query({
+	url: props.file.url,
+})}`;
 let dialogEl = $ref<InstanceType<typeof XModalWindow>>();
 let imgEl = $ref<HTMLImageElement>();
 let cropper: Cropper | null = null;
@@ -70,10 +72,10 @@ const ok = async () => {
 				method: 'POST',
 				body: formData,
 			})
-				.then(response => response.json())
-				.then(f => {
-					res(f);
-				});
+			.then(response => response.json())
+			.then(f => {
+				res(f);
+			});
 		});
 	});
 

@@ -33,16 +33,14 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, defineAsyncComponent } from 'vue';
-import * as Acct from 'misskey-js/built/acct';
+import { computed } from 'vue';
 import XHeader from './_header_.vue';
-import MkButton from '@/components/MkButton.vue';
 import MkInput from '@/components/form/input.vue';
 import MkSelect from '@/components/form/select.vue';
 import MkFileListForAdmin from '@/components/MkFileListForAdmin.vue';
-import bytes from '@/filters/bytes';
 import * as os from '@/os';
 import { i18n } from '@/i18n';
+import { lookupFile } from '@/scripts/lookup-file';
 import { definePageMetadata } from '@/scripts/page-metadata';
 
 let origin = $ref('local');
@@ -72,36 +70,15 @@ function clear() {
 	});
 }
 
-function show(file) {
-	os.pageWindow(`/admin/file/${file.id}`);
-}
-
-async function find() {
-	const { canceled, result: q } = await os.inputText({
-		title: i18n.ts.fileIdOrUrl,
-		allowEmpty: false,
-	});
-	if (canceled) return;
-
-	os.api('admin/drive/show-file', q.startsWith('http://') || q.startsWith('https://') ? { url: q.trim() } : { fileId: q.trim() }).then(file => {
-		show(file);
-	}).catch(err => {
-		if (err.code === 'NO_SUCH_FILE') {
-			os.alert({
-				type: 'error',
-				text: i18n.ts.notFound,
-			});
-		}
-	});
-}
-
 const headerActions = $computed(() => [{
 	text: i18n.ts.lookup,
-	icon: 'fas fa-search',
-	handler: find,
+	icon: 'ti ti-search',
+	handler: () => {
+		lookupFile();
+	},
 }, {
 	text: i18n.ts.clearCachedFiles,
-	icon: 'fas fa-trash-alt',
+	icon: 'ti ti-trash',
 	handler: clear,
 }]);
 
@@ -109,7 +86,7 @@ const headerTabs = $computed(() => []);
 
 definePageMetadata(computed(() => ({
 	title: i18n.ts.files,
-	icon: 'fas fa-cloud',
+	icon: 'ti ti-cloud',
 })));
 </script>
 

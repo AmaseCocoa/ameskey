@@ -1,7 +1,9 @@
 <template>
 <button
-	v-if="!link" class="bghgjjyj _button"
-	:class="{ inline, primary, gradate, danger, rounded, full }"
+	v-if="!(link && to)"
+	ref="el"
+	class="bghgjjyj _button"
+	:class="{ inline, primary, gradate, danger, rounded, full, small }"
 	:type="type"
 	@click="emit('click', $event)"
 	@mousedown="onMousedown"
@@ -12,8 +14,10 @@
 	</div>
 </button>
 <MkA
-	v-else class="bghgjjyj _button"
-	:class="{ inline, primary, gradate, danger, rounded, full }"
+	v-else
+	ref="el"
+	class="bghgjjyj _button"
+	:class="{ inline, primary, gradate, danger, rounded, full, small }"
 	:to="to"
 	@mousedown="onMousedown"
 >
@@ -39,6 +43,7 @@ const props = defineProps<{
 	wait?: boolean;
 	danger?: boolean;
 	full?: boolean;
+	small?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -51,33 +56,35 @@ let ripples = $ref<HTMLElement | null>(null);
 onMounted(() => {
 	if (props.autofocus) {
 		nextTick(() => {
-			el!.focus();
+			el?.focus();
 		});
 	}
 });
 
-function distance(p, q): number {
+const distance = (p: { x: number; y: number; }, q: { x: number; y: number; }): number => {
 	return Math.hypot(p.x - q.x, p.y - q.y);
-}
+};
 
-function calcCircleScale(boxW, boxH, circleCenterX, circleCenterY): number {
+const calcCircleScale = (boxW: number, boxH: number, circleCenterX: number, circleCenterY: number): number => {
 	const origin = { x: circleCenterX, y: circleCenterY };
 	const dist1 = distance({ x: 0, y: 0 }, origin);
 	const dist2 = distance({ x: boxW, y: 0 }, origin);
 	const dist3 = distance({ x: 0, y: boxH }, origin);
 	const dist4 = distance({ x: boxW, y: boxH }, origin);
 	return Math.max(dist1, dist2, dist3, dist4) * 2;
-}
+};
 
-function onMousedown(evt: MouseEvent): void {
-	const target = evt.target! as HTMLElement;
+const onMousedown = (evt: MouseEvent): void => {
+	const { target } = evt;
+	if (!(target instanceof HTMLElement)) return;
+
 	const rect = target.getBoundingClientRect();
 
 	const ripple = document.createElement('div');
-	ripple.style.top = (evt.clientY - rect.top - 1).toString() + 'px';
-	ripple.style.left = (evt.clientX - rect.left - 1).toString() + 'px';
+	ripple.style.top = `${evt.clientY - rect.top - 1}px`;
+	ripple.style.left = `${evt.clientX - rect.left - 1}px`;
 
-	ripples!.appendChild(ripple);
+	ripples?.appendChild(ripple);
 
 	const circleCenterX = evt.clientX - rect.left;
 	const circleCenterY = evt.clientY - rect.top;
@@ -85,16 +92,16 @@ function onMousedown(evt: MouseEvent): void {
 	const scale = calcCircleScale(target.clientWidth, target.clientHeight, circleCenterX, circleCenterY);
 
 	window.setTimeout(() => {
-		ripple.style.transform = 'scale(' + (scale / 2) + ')';
+		ripple.style.transform = `scale(${scale / 2})`;
 	}, 1);
 	window.setTimeout(() => {
 		ripple.style.transition = 'all 1s ease';
 		ripple.style.opacity = '0';
 	}, 1000);
 	window.setTimeout(() => {
-		if (ripples) ripples.removeChild(ripple);
+		ripples?.removeChild(ripple);
 	}, 2000);
-}
+};
 </script>
 
 <style lang="scss" scoped>
@@ -107,7 +114,7 @@ function onMousedown(evt: MouseEvent): void {
 	padding: 8px 16px;
 	text-align: center;
 	font-weight: normal;
-	font-size: 1em;
+	font-size: 90%;
 	box-shadow: none;
 	text-decoration: none;
 	background: var(--buttonBg);
@@ -122,6 +129,11 @@ function onMousedown(evt: MouseEvent): void {
 
 	&:not(:disabled):active {
 		background: var(--buttonHoverBg);
+	}
+
+	&.small {
+		font-size: 90%;
+		padding: 6px 12px;
 	}
 
 	&.full {

@@ -1,10 +1,10 @@
 <template>
 <MkContainer :show-header="widgetProps.showHeader" :foldable="foldable" :scrollable="scrollable" class="mkw-federation">
-	<template #header><i class="fas fa-globe"></i>{{ i18n.ts._widgets.federation }}</template>
+	<template #header><i class="ti ti-whirl"></i>{{ i18n.ts._widgets.federation }}</template>
 
 	<div class="wbrkwalb">
 		<MkLoading v-if="fetching"/>
-		<transition-group v-else tag="div" :name="$store.state.animation ? 'chart' : ''" class="instances">
+		<TransitionGroup v-else tag="div" :name="$store.state.animation ? 'chart' : ''" class="instances">
 			<div v-for="(instance, i) in instances" :key="instance.id" class="instance">
 				<img v-if="instance.iconUrl" :src="instance.iconUrl" alt=""/>
 				<div class="body">
@@ -13,14 +13,14 @@
 				</div>
 				<MkMiniChart class="chart" :src="charts[i].requests.received"/>
 			</div>
-		</transition-group>
+		</TransitionGroup>
 	</div>
 </MkContainer>
 </template>
 
 <script lang="ts" setup>
-import { onMounted, onUnmounted, ref } from 'vue';
-import { useWidgetPropsManager, Widget, WidgetComponentEmits, WidgetComponentExpose, WidgetComponentProps } from './widget';
+import { ref } from 'vue';
+import { useWidgetPropsManager, Widget, WidgetComponentExpose } from './widget';
 import { GetFormResultType } from '@/scripts/form';
 import MkContainer from '@/components/MkContainer.vue';
 import MkMiniChart from '@/components/MkMiniChart.vue';

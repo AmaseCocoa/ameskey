@@ -21,8 +21,6 @@
 							<option value="moderator">{{ i18n.ts.moderator }}</option>
 							<option value="silenced">{{ i18n.ts.silence }}</option>
 							<option value="suspended">{{ i18n.ts.suspend }}</option>
-							<option value="bot">{{ i18n.ts.bot }}</option>
-							<option value="deleted">{{ i18n.ts.deleted }}</option>
 						</MkSelect>
 						<MkSelect v-model="origin" style="flex: 1;">
 							<template #label>{{ i18n.ts.instance }}</template>
@@ -32,11 +30,11 @@
 						</MkSelect>
 					</div>
 					<div class="inputs">
-						<MkInput v-model="searchUsername" style="flex: 1;" type="text" :spellcheck="false" @update:modelValue="$refs.users.reload()">
+						<MkInput v-model="searchUsername" style="flex: 1;" type="text" :spellcheck="false" @update:model-value="$refs.users.reload()">
 							<template #prefix>@</template>
 							<template #label>{{ i18n.ts.username }}</template>
 						</MkInput>
-						<MkInput v-model="searchHost" style="flex: 1;" type="text" :spellcheck="false" :disabled="pagination.params.origin === 'local'" @update:modelValue="$refs.users.reload()">
+						<MkInput v-model="searchHost" style="flex: 1;" type="text" :spellcheck="false" :disabled="pagination.params.origin === 'local'" @update:model-value="$refs.users.reload()">
 							<template #prefix>@</template>
 							<template #label>{{ i18n.ts.host }}</template>
 						</MkInput>
@@ -117,17 +115,17 @@ function show(user) {
 }
 
 const headerActions = $computed(() => [{
-	icon: 'fas fa-search',
+	icon: 'ti ti-search',
 	text: i18n.ts.search,
 	handler: searchUser,
 }, {
 	asFullButton: true,
-	icon: 'fas fa-plus',
+	icon: 'ti ti-plus',
 	text: i18n.ts.addUser,
 	handler: addUser,
 }, {
 	asFullButton: true,
-	icon: 'fas fa-search',
+	icon: 'ti ti-search',
 	text: i18n.ts.lookup,
 	handler: lookupUser,
 }]);
@@ -136,7 +134,7 @@ const headerTabs = $computed(() => []);
 
 definePageMetadata(computed(() => ({
 	title: i18n.ts.users,
-	icon: 'fas fa-users',
+	icon: 'ti ti-users',
 })));
 </script>
 
@@ -156,7 +154,7 @@ definePageMetadata(computed(() => ({
 				}
 			}
 		}
-
+	
 		> .users {
 			margin-top: var(--margin);
 			display: grid;

@@ -18,7 +18,8 @@ import { deckStore, Column } from '@/ui/deck/deck-store';
 import * as os from '@/os';
 import { i18n } from '@/i18n';
 import { mainRouter } from '@/router';
-import { PageMetadata, provideMetadataReceiver, setPageMetadata } from '@/scripts/page-metadata';
+import { PageMetadata, provideMetadataReceiver } from '@/scripts/page-metadata';
+import { disableContextmenu } from '@/scripts/touch';
 
 defineProps<{
 	column: Column;
@@ -42,6 +43,7 @@ function back() {
 }
 */
 function onContextmenu(ev: MouseEvent) {
+	if (disableContextmenu) return;
 	if (!ev.target) return;
 
 	const isLink = (el: HTMLElement) => {
@@ -58,7 +60,7 @@ function onContextmenu(ev: MouseEvent) {
 		type: 'label',
 		text: path,
 	}, {
-		icon: 'fas fa-window-maximize',
+		icon: 'ti ti-window-maximize',
 		text: i18n.ts.openInWindow,
 		action: () => {
 			os.pageWindow(path);

@@ -34,12 +34,12 @@
 
 					<FormSplit :min-width="280">
 						<FormInput v-model="objectStorageAccessKey" class="_formBlock">
-							<template #prefix><i class="fas fa-key"></i></template>
+							<template #prefix><i class="ti ti-key"></i></template>
 							<template #label>Access key</template>
 						</FormInput>
 
 						<FormInput v-model="objectStorageSecretKey" class="_formBlock">
-							<template #prefix><i class="fas fa-key"></i></template>
+							<template #prefix><i class="ti ti-key"></i></template>
 							<template #label>Secret key</template>
 						</FormInput>
 					</FormSplit>
@@ -75,7 +75,6 @@ import FormSwitch from '@/components/form/switch.vue';
 import FormInput from '@/components/form/input.vue';
 import FormSuspense from '@/components/form/suspense.vue';
 import FormSplit from '@/components/form/split.vue';
-import FormSection from '@/components/form/section.vue';
 import * as os from '@/os';
 import { fetchInstance } from '@/instance';
 import { i18n } from '@/i18n';
@@ -134,7 +133,7 @@ function save() {
 
 const headerActions = $computed(() => [{
 	asFullButton: true,
-	icon: 'fas fa-check',
+	icon: 'ti ti-check',
 	text: i18n.ts.save,
 	handler: save,
 }]);
@@ -143,6 +142,6 @@ const headerTabs = $computed(() => []);
 
 definePageMetadata({
 	title: i18n.ts.objectStorage,
-	icon: 'fas fa-cloud',
+	icon: 'ti ti-cloud',
 });
 </script>

@@ -16,26 +16,28 @@
 		@contextmenu.prevent.stop="onContextmenu"
 	>
 		<button v-if="isStacked && !isMainColumn" class="toggleActive _button" @click="toggleActive">
-			<template v-if="active"><i class="fas fa-angle-up"></i></template>
-			<template v-else><i class="fas fa-angle-down"></i></template>
+			<template v-if="active"><i class="ti ti-chevron-up"></i></template>
+			<template v-else><i class="ti ti-chevron-down"></i></template>
 		</button>
 		<div class="action">
 			<slot name="action"></slot>
 		</div>
 		<span class="header"><slot name="header"></slot></span>
-		<button v-tooltip="i18n.ts.settings" class="menu _button" @click.stop="showSettingsMenu"><i class="fas fa-ellipsis"></i></button>
+		<button v-tooltip="i18n.ts.reload" class="reload _button" @click.stop="reload"><i class="ti ti-reload"></i></button>
+		<button v-tooltip="i18n.ts.settings" class="menu _button" @click.stop="showSettingsMenu"><i class="ti ti-dots"></i></button>
 	</header>
-	<div v-show="active" ref="body">
+	<div v-show="active" :key="`${column.id}:${reloadCount}`" ref="body">
 		<slot></slot>
 	</div>
 </section>
 </template>
 
 <script lang="ts" setup>
-import { onBeforeUnmount, onMounted, provide, Ref, watch } from 'vue';
-import { updateColumn, swapLeftColumn, swapRightColumn, swapUpColumn, swapDownColumn, stackLeftColumn, popRightColumn, removeColumn, swapColumn, Column , deckStore } from './deck-store';
+import { onBeforeUnmount, onMounted, provide, watch } from 'vue';
+import { updateColumn, swapLeftColumn, swapRightColumn, swapUpColumn, swapDownColumn, stackLeftColumn, popRightColumn, removeColumn, swapColumn, Column } from './deck-store';
 import * as os from '@/os';
 import { i18n } from '@/i18n';
+import { disableContextmenu } from '@/scripts/touch';
 import { MenuItem } from '@/types/menu';
 
 provide('shouldHeaderThin', true);
@@ -67,6 +69,8 @@ watch($$(dragging), v => os.deckGlobalEvents.emit(v ? 'column.dragStart' : 'colu
 let draghover = $ref(false);
 let dropready = $ref(false);
 
+let reloadCount = $ref(0);
+
 const isMainColumn = $computed(() => props.column.type === 'main');
 const active = $computed(() => props.column.active !== false);
 watch($$(active), v => emit('change-active-state', v));
@@ -88,6 +92,10 @@ onBeforeUnmount(() => {
 	os.deckGlobalEvents.off('column.dragEnd', onOtherDragEnd);
 });
 
+const reload = (): void => {
+	reloadCount++;
+};
+
 function onOtherDragStart() {
 	dropready = true;
 }
@@ -105,7 +113,7 @@ function toggleActive() {
 
 function getMenu() {
 	let items = [{
-		icon: 'fas fa-cog',
+		icon: 'ti ti-settings',
 		text: i18n.ts._deck.configureColumn,
 		action: async () => {
 			const { canceled, result } = await os.form(props.column.name, {
@@ -131,46 +139,46 @@ function getMenu() {
 	}, {
 		type: 'parent',
 		text: i18n.ts.move + '...',
-		icon: 'fas fa-arrows-up-down-left-right',
+		icon: 'ti ti-arrows-move',
 		children: [{
-			icon: 'fas fa-arrow-left',
+			icon: 'ti ti-arrow-left',
 			text: i18n.ts._deck.swapLeft,
 			action: () => {
 				swapLeftColumn(props.column.id);
 			},
 		}, {
-			icon: 'fas fa-arrow-right',
+			icon: 'ti ti-arrow-right',
 			text: i18n.ts._deck.swapRight,
 			action: () => {
 				swapRightColumn(props.column.id);
 			},
 		}, props.isStacked ? {
-			icon: 'fas fa-arrow-up',
+			icon: 'ti ti-arrow-up',
 			text: i18n.ts._deck.swapUp,
 			action: () => {
 				swapUpColumn(props.column.id);
 			},
 		} : undefined, props.isStacked ? {
-			icon: 'fas fa-arrow-down',
+			icon: 'ti ti-arrow-down',
 			text: i18n.ts._deck.swapDown,
 			action: () => {
 				swapDownColumn(props.column.id);
 			},
 		} : undefined],
 	}, {
-		icon: 'fas fa-window-restore',
+		icon: 'ti ti-stack-2',
 		text: i18n.ts._deck.stackLeft,
 		action: () => {
 			stackLeftColumn(props.column.id);
 		},
 	}, props.isStacked ? {
-		icon: 'fas fa-window-maximize',
+		icon: 'ti ti-window-maximize',
 		text: i18n.ts._deck.popRight,
 		action: () => {
 			popRightColumn(props.column.id);
 		},
 	} : undefined, null, {
-		icon: 'fas fa-trash-alt',
+		icon: 'ti ti-trash',
 		text: i18n.ts.remove,
 		danger: true,
 		action: () => {
@@ -191,6 +199,7 @@ function showSettingsMenu(ev: MouseEvent) {
 }
 
 function onContextmenu(ev: MouseEvent) {
+	if (disableContextmenu) return;
 	os.contextMenu(getMenu(), ev);
 }
 
@@ -352,6 +361,7 @@ function onDrop(ev) {
 
 		> .toggleActive,
 		> .action > ::v-deep(*),
+		> .reload,
 		> .menu {
 			z-index: 1;
 			width: var(--deckColumnHeaderHeight);
@@ -377,6 +387,11 @@ function onDrop(ev) {
 
 		> .action:empty {
 			display: none;
+		}
+
+		> .reload {
+			margin-left: auto;
+			margin-right: 0px;
 		}
 
 		> .menu {

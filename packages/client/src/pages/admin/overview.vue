@@ -19,12 +19,6 @@
 							<MkNumberDiff v-if="notesComparedToThePrevDay != null" v-tooltip="i18n.ts.dayOverDayChanges" class="diff" :value="notesComparedToThePrevDay"><template #before>(</template><template #after>)</template></MkNumberDiff>
 						</div>
 					</div>
-					<div class="number _panel">
-						<div class="label">Current Online Users</div>
-						<div class="value _monospace">
-							{{ number(onlineUsersCount) }}
-						</div>
-					</div>
 				</div>
 			</div>
 
@@ -57,7 +51,7 @@
 			</div>
 
 			<div class="container env">
-				<div class="title">Enviroment</div>
+				<div class="title">Environment</div>
 				<div class="body">
 					<div class="number _panel">
 						<div class="label">Misskey</div>
@@ -117,8 +111,8 @@
 			<div class="container tagCloud">
 				<div class="body">
 					<MkTagCloud v-if="activeInstances">
-						<li v-for="instance in activeInstances">
-							<a v-if="instance.iconUrl" @click.prevent="onInstanceClick(instance)">
+						<li v-for="instance in activeInstances" :key="instance.id">
+							<a @click.prevent="onInstanceClick(instance)">
 								<img style="width: 32px;" :src="instance.iconUrl">
 							</a>
 						</li>
@@ -165,15 +159,14 @@ import {
 } from 'chart.js';
 import { enUS } from 'date-fns/locale';
 import tinycolor from 'tinycolor2';
-import MagicGrid from 'magic-grid';
-import XMetrics from './metrics.vue';
+import { v4 as uuid } from 'uuid';
 import XFederation from './overview.federation.vue';
 import XQueueChart from './overview.queue-chart.vue';
 import XUser from './overview.user.vue';
 import XPie from './overview.pie.vue';
 import MkNumberDiff from '@/components/MkNumberDiff.vue';
 import MkTagCloud from '@/components/MkTagCloud.vue';
-import { version, url } from '@/config';
+import { version } from '@/config';
 import number from '@/filters/number';
 import * as os from '@/os';
 import { stream } from '@/stream';
@@ -205,7 +198,6 @@ Chart.register(
 const rootEl = $ref<HTMLElement>();
 const chartEl = $ref<HTMLCanvasElement>(null);
 let stats: any = $ref(null);
-let onlineUsersCount = $ref();
 let serverInfo: any = $ref(null);
 let topSubInstancesForPie: any = $ref(null);
 let topPubInstancesForPie: any = $ref(null);
@@ -412,10 +404,6 @@ onMounted(async () => {
 		});
 	});
 
-	os.api('get-online-users-count').then(res => {
-		onlineUsersCount = res.count;
-	});
-
 	os.apiGet('charts/federation', { limit: 2, span: 'day' }).then(chart => {
 		federationPubActive = chart.pubActive[0];
 		federationPubActiveDiff = chart.pubActive[0] - chart.pubActive[1];
@@ -462,7 +450,7 @@ onMounted(async () => {
 
 	nextTick(() => {
 		queueStatsConnection.send('requestLog', {
-			id: Math.random().toString().substr(2, 8),
+			id: uuid(),
 			length: 100,
 		});
 	});
@@ -478,7 +466,7 @@ const headerTabs = $computed(() => []);
 
 definePageMetadata({
 	title: i18n.ts.dashboard,
-	icon: 'fas fa-tachometer-alt',
+	icon: 'ti ti-dashboard',
 });
 </script>
 

@@ -26,16 +26,16 @@
 		<FormLink @click="chooseUploadFolder()">
 			{{ i18n.ts.uploadFolder }}
 			<template #suffix>{{ uploadFolder ? uploadFolder.name : '-' }}</template>
-			<template #suffixIcon><i class="fas fa-folder-open"></i></template>
+			<template #suffixIcon><i class="ti ti-folder"></i></template>
 		</FormLink>
 		<FormSwitch v-model="keepOriginalUploading" class="_formBlock">
 			<template #label>{{ i18n.ts.keepOriginalUploading }}</template>
 			<template #caption>{{ i18n.ts.keepOriginalUploadingDescription }}</template>
 		</FormSwitch>
-		<FormSwitch v-model="alwaysMarkNsfw" class="_formBlock" @update:modelValue="saveProfile()">
+		<FormSwitch v-model="alwaysMarkNsfw" class="_formBlock" @update:model-value="saveProfile()">
 			<template #label>{{ i18n.ts.alwaysMarkSensitive }}</template>
 		</FormSwitch>
-		<FormSwitch v-model="autoSensitive" class="_formBlock" @update:modelValue="saveProfile()">
+		<FormSwitch v-model="autoSensitive" class="_formBlock" @update:model-value="saveProfile()">
 			<template #label>{{ i18n.ts.enableAutoSensitive }}<span class="_beta">{{ i18n.ts.beta }}</span></template>
 			<template #caption>{{ i18n.ts.enableAutoSensitiveDescription }}</template>
 		</FormSwitch>
@@ -120,7 +120,7 @@ const headerTabs = $computed(() => []);
 
 definePageMetadata({
 	title: i18n.ts.drive,
-	icon: 'fas fa-cloud',
+	icon: 'ti ti-cloud',
 });
 </script>
 

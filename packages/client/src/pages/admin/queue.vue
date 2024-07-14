@@ -9,10 +9,9 @@
 </template>
 
 <script lang="ts" setup>
-import { markRaw, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { } from 'vue';
 import XQueue from './queue.chart.vue';
 import XHeader from './_header_.vue';
-import MkButton from '@/components/MkButton.vue';
 import * as os from '@/os';
 import * as config from '@/config';
 import { i18n } from '@/i18n';
@@ -34,7 +33,7 @@ function clear() {
 
 const headerActions = $computed(() => [{
 	asFullButton: true,
-	icon: 'fas fa-up-right-from-square',
+	icon: 'ti ti-external-link',
 	text: i18n.ts.dashboard,
 	handler: () => {
 		window.open(config.url + '/queue', '_blank');
@@ -51,6 +50,6 @@ const headerTabs = $computed(() => [{
 
 definePageMetadata({
 	title: i18n.ts.jobQueue,
-	icon: 'fas fa-clipboard-list',
+	icon: 'ti ti-clock-play',
 });
 </script>

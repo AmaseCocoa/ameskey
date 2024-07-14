@@ -38,12 +38,12 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import { toUnicode } from 'punycode/';
+import XTimeline from './welcome.timeline.vue';
 import XSigninDialog from '@/components/MkSigninDialog.vue';
 import XSignupDialog from '@/components/MkSignupDialog.vue';
 import MkButton from '@/components/MkButton.vue';
 import XNote from '@/components/MkNote.vue';
 import MkFeaturedPhotos from '@/components/MkFeaturedPhotos.vue';
-import XTimeline from './welcome.timeline.vue';
 import { host, instanceName } from '@/config';
 import * as os from '@/os';
 import number from '@/filters/number';
@@ -104,19 +104,19 @@ export default defineComponent({
 		showMenu(ev) {
 			os.popupMenu([{
 				text: this.$t('aboutX', { x: instanceName }),
-				icon: 'fas fa-info-circle',
+				icon: 'ti ti-info-circle',
 				action: () => {
 					os.pageWindow('/about');
 				}
 			}, {
 				text: this.$ts.aboutMisskey,
-				icon: 'fas fa-info-circle',
+				icon: 'ti ti-info-circle',
 				action: () => {
 					os.pageWindow('/about-misskey');
 				}
 			}, null, {
 				text: this.$ts.help,
-				icon: 'fas fa-question-circle',
+				icon: 'ti ti-question-circle',
 				action: () => {
 					window.open(`https://misskey-hub.net/help.md`, '_blank');
 				}

@@ -21,7 +21,7 @@
 		</div>
 	</div>
 
-	<transition :name="$store.state.animation ? 'tray-back' : ''">
+	<Transition :name="$store.state.animation ? 'tray-back' : ''">
 		<div
 			v-if="widgetsShowing"
 			class="tray-back _modalBg"
@@ -30,7 +30,7 @@
 		></div>
 	</transition>
 
-	<transition :name="$store.state.animation ? 'tray' : ''">
+	<Transition :name="$store.state.animation ? 'tray' : ''">
 		<XWidgets v-if="widgetsShowing" class="tray"/>
 	</transition>
 
@@ -41,14 +41,15 @@
 </template>
 
 <script lang="ts" setup>
-import { defineAsyncComponent, markRaw, ComputedRef, ref, onMounted, provide } from 'vue';
+import { defineAsyncComponent, ComputedRef, onMounted, provide } from 'vue';
 import XSidebar from './classic.sidebar.vue';
 import XCommon from './_common_/common.vue';
 import { instanceName } from '@/config';
 import { StickySidebar } from '@/scripts/sticky-sidebar';
 import * as os from '@/os';
 import { mainRouter } from '@/router';
-import { PageMetadata, provideMetadataReceiver, setPageMetadata } from '@/scripts/page-metadata';
+import { PageMetadata, provideMetadataReceiver } from '@/scripts/page-metadata';
+import { disableContextmenu } from '@/scripts/touch';
 import { defaultStore } from '@/store';
 import { i18n } from '@/i18n';
 const XHeaderMenu = defineAsyncComponent(() => import('./classic.header.vue'));
@@ -90,6 +91,7 @@ function top() {
 }
 
 function onContextmenu(ev: MouseEvent) {
+	if (disableContextmenu) return;
 	const isLink = (el: HTMLElement) => {
 		if (el.tagName === 'A') return true;
 		if (el.parentElement) {
@@ -104,13 +106,13 @@ function onContextmenu(ev: MouseEvent) {
 		type: 'label',
 		text: path,
 	}, {
-		icon: fullView ? 'fas fa-compress' : 'fas fa-expand',
+		icon: fullView ? 'ti ti-minimize' : 'ti ti-maximize',
 		text: fullView ? i18n.ts.quitFullView : i18n.ts.fullView,
 		action: () => {
 			fullView = !fullView;
 		},
 	}, {
-		icon: 'fas fa-window-maximize',
+		icon: 'ti ti-window-maximize',
 		text: i18n.ts.openInWindow,
 		action: () => {
 			os.pageWindow(path);

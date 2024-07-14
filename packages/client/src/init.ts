@@ -4,26 +4,27 @@
 
 import '@/style.scss';
 
+import { computed, createApp, watch, markRaw, version as vueVersion, defineAsyncComponent } from 'vue';
+import { compareVersions } from 'compare-versions';
+import JSON5 from 'json5';
+import { parseObject } from '@/scripts/tms/parse';
+
 //#region account indexedDB migration
 import { set } from '@/scripts/idb-proxy';
 
 if (localStorage.getItem('accounts') != null) {
-	set('accounts', JSON.parse(localStorage.getItem('accounts')));
+	set('accounts', parseObject(localStorage.getItem('accounts')));
 	localStorage.removeItem('accounts');
 }
 //#endregion
 
-import { computed, createApp, watch, markRaw, version as vueVersion, defineAsyncComponent } from 'vue';
-import { compareVersions } from 'compare-versions';
-import JSON5 from 'json5';
-
 import widgets from '@/widgets';
 import directives from '@/directives';
 import components from '@/components';
-import { version, ui, lang, host } from '@/config';
+import { version, ui, lang, updateLocale } from '@/config';
 import { applyTheme } from '@/scripts/theme';
 import { isDeviceDarkmode } from '@/scripts/is-device-darkmode';
-import { i18n } from '@/i18n';
+import { i18n, updateI18n, I18nObject } from '@/i18n';
 import { confirm, alert, post, popup, toast } from '@/os';
 import { stream } from '@/stream';
 import * as sound from '@/scripts/sound';
@@ -31,16 +32,22 @@ import { $i, refreshAccount, login, updateAccount, signout } from '@/account';
 import { defaultStore, ColdDeviceStorage } from '@/store';
 import { fetchInstance, instance } from '@/instance';
 import { makeHotkey } from '@/scripts/hotkey';
-import { search } from '@/scripts/search';
 import { deviceKind } from '@/scripts/device-kind';
 import { initializeSw } from '@/scripts/initialize-sw';
 import { reloadChannel } from '@/scripts/unison-reload';
 import { reactionPicker } from '@/scripts/reaction-picker';
 import { getUrlWithoutLoginId } from '@/scripts/login-id';
 import { getAccountFromId } from '@/scripts/get-account-from-id';
+import { trimHash } from '@/scripts/tms/url-hash';
+import { mainRouter } from '@/router';
 
-(async () => {
+(async (): Promise<void> => {
 	console.info(`Misskey v${version}`);
+
+	const [{ type: entryType }] = performance.getEntriesByType('navigation') as PerformanceNavigationTiming[];
+	if (entryType === 'reload') {
+		trimHash();
+	}
 
 	if (_DEV_) {
 		console.warn('Development mode!!!');
@@ -73,6 +80,22 @@ import { getAccountFromId } from '@/scripts/get-account-from-id';
 		});
 	}
 
+	//#region Detect language & fetch translations
+	const localeVersion = localStorage.getItem('localeVersion');
+	const localeOutdated = (localeVersion == null || localeVersion !== version);
+	if (localeOutdated) {
+		const res = await window.fetch(`/assets/locales/${lang}.${version}.json`);
+		if (res.status === 200) {
+			const newLocale = await res.text();
+			const parsedNewLocale = parseObject<I18nObject>(newLocale);
+			localStorage.setItem('locale', newLocale);
+			localStorage.setItem('localeVersion', version);
+			updateLocale(parsedNewLocale);
+			updateI18n(parsedNewLocale);
+		}
+	}
+	//#endregion
+
 	// タッチデバイスでCSSの:hoverを機能させる
 	document.addEventListener('touchend', () => {}, { passive: true });
 
@@ -84,24 +107,24 @@ import { getAccountFromId } from '@/scripts/get-account-from-id';
 
 	//#region SEE: https://css-tricks.com/the-trick-to-viewport-units-on-mobile/
 	// TODO: いつの日にか消したい
-	const vh = window.innerHeight * 0.01;
-	document.documentElement.style.setProperty('--vh', `${vh}px`);
-	window.addEventListener('resize', () => {
+	const setViewportHeight = (): void => {
 		const vh = window.innerHeight * 0.01;
 		document.documentElement.style.setProperty('--vh', `${vh}px`);
-	});
+	};
+	window.addEventListener('resize', setViewportHeight);
 	//#endregion
 
 	// If mobile, insert the viewport meta tag
 	if (['smartphone', 'tablet'].includes(deviceKind)) {
-		const viewport = document.getElementsByName('viewport').item(0);
-		viewport.setAttribute('content',
-			`${viewport.getAttribute('content')}, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover`);
+		const viewport = document.querySelector<HTMLMetaElement>('meta[name="viewport"]');
+		if (viewport) {
+			viewport.content += ', minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
+		}
 	}
 
 	//#region Set lang attr
 	const html = document.documentElement;
-	html.setAttribute('lang', lang);
+	html.setAttribute('lang', lang ?? 'en-US');
 	//#endregion
 
 	//#region loginId
@@ -200,7 +223,7 @@ import { getAccountFromId } from '@/scripts/get-account-from-id';
 
 	// https://github.com/misskey-dev/misskey/pull/8575#issuecomment-1114239210
 	// なぜかinit.tsの内容が2回実行されることがあるため、mountするdivを1つに制限する
-	const rootEl = (() => {
+	const rootEl = ((): HTMLElement => {
 		const MISSKEY_MOUNT_DIV_ID = 'misskey_app';
 
 		const currentEl = document.getElementById(MISSKEY_MOUNT_DIV_ID);
@@ -210,10 +233,10 @@ import { getAccountFromId } from '@/scripts/get-account-from-id';
 			return currentEl;
 		}
 
-		const rootEl = document.createElement('div');
-		rootEl.id = MISSKEY_MOUNT_DIV_ID;
-		document.body.appendChild(rootEl);
-		return rootEl;
+		const rootEl_ = document.createElement('div');
+		rootEl_.id = MISSKEY_MOUNT_DIV_ID;
+		document.body.appendChild(rootEl_);
+		return rootEl_;
 	})();
 
 	app.mount(rootEl);
@@ -245,6 +268,7 @@ import { getAccountFromId } from '@/scripts/get-account-from-id';
 				}
 			}
 		} catch (err) {
+			// emtpy
 		}
 	}
 
@@ -319,13 +343,15 @@ import { getAccountFromId } from '@/scripts/get-account-from-id';
 		}
 	});
 
-	stream.on('emojiAdded', emojiData => {
+	stream.on('emojiAdded', _emojiData => {
 		// TODO
 		//store.commit('instance/set', );
 	});
 
 	for (const plugin of ColdDeviceStorage.get('plugins').filter(p => p.active)) {
-		import('./plugin').then(({ install }) => {
+		import('./plugin').then(async ({ install }) => {
+			// Workaround for https://bugs.webkit.org/show_bug.cgi?id=242740
+			await new Promise(r => setTimeout(r, 0));
 			install(plugin);
 		});
 	}
@@ -334,7 +360,9 @@ import { getAccountFromId } from '@/scripts/get-account-from-id';
 		'd': (): void => {
 			defaultStore.set('darkMode', !defaultStore.state.darkMode);
 		},
-		's': search,
+		's': (): void => {
+			mainRouter.push('/search');
+		},
 	};
 
 	if ($i) {

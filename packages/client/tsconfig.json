@@ -9,7 +9,7 @@
 		"noFallthroughCasesInSwitch": true,
 		"declaration": false,
 		"sourceMap": false,
-		"target": "es2017",
+		"target": "es2021",
 		"module": "esnext",
 		"moduleResolution": "node",
 		"removeComments": false,
@@ -23,25 +23,13 @@
 		"useDefineForClassFields": true,
 		"baseUrl": ".",
 		"paths": {
-			"@/*": ["./src/*"],
+			"@/*": ["./src/*"]
 		},
-		"typeRoots": [
-			"node_modules/@types",
-			"@types",
-		],
-		"types": [
-			"vite/client",
-		],
-		"lib": [
-			"esnext",
-			"dom"
-		],
+		"typeRoots": ["node_modules/@types", "@types"],
+		"types": ["vite/client"],
+		"lib": ["esnext", "dom"],
 		"jsx": "preserve"
 	},
 	"compileOnSave": false,
-	"include": [
-		".eslintrc.js",
-		"./**/*.ts",
-		"./**/*.vue"
-	]
+	"include": ["./**/*.ts", "./**/*.vue"]
 }

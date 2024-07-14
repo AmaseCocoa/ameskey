@@ -1,19 +1,17 @@
 import * as Acct from 'misskey-js/built/acct';
 import { defineAsyncComponent } from 'vue';
+import * as misskey from 'misskey-js';
 import { i18n } from '@/i18n';
-import copyToClipboard from '@/scripts/copy-to-clipboard';
+import { copyText } from '@/scripts/tms/clipboard';
 import { host } from '@/config';
 import * as os from '@/os';
 import { userActions } from '@/store';
 import { $i, iAmModerator } from '@/account';
 import { mainRouter } from '@/router';
 import { Router } from '@/nirax';
-import { defaultStore } from '@/store';
 
-export function getUserMenu(user, router: Router = mainRouter) {
+export function getUserMenu(user: misskey.entities.UserDetailed, router: Router = mainRouter) {
 	const meId = $i ? $i.id : null;
-
-	const enableSudo = defaultStore.state.enableSudo;
 
 	async function pushList() {
 		const t = i18n.ts.selectList; // なぜか後で参照すると null になるので最初にメモリに確保しておく
@@ -148,8 +146,6 @@ export function getUserMenu(user, router: Router = mainRouter) {
 	}
 
 	async function invalidateFollow() {
-		if (!await getConfirmed(i18n.ts.breakFollowConfirm)) return;
-
 		os.apiWithDialog('following/invalidate', {
 			userId: user.id,
 		}).then(() => {
@@ -158,70 +154,70 @@ export function getUserMenu(user, router: Router = mainRouter) {
 	}
 
 	let menu = [{
-		icon: 'fas fa-at',
+		icon: 'ti ti-at',
 		text: i18n.ts.copyUsername,
 		action: () => {
-			copyToClipboard(`@${user.username}@${user.host || host}`);
+			copyText(`@${user.username}@${user.host || host}`);
 		},
 	}, {
-		icon: 'fas fa-info-circle',
+		icon: 'ti ti-info-circle',
 		text: i18n.ts.info,
 		action: () => {
 			router.push(`/user-info/${user.id}`);
 		},
 	}, {
-		icon: 'fas fa-envelope',
+		icon: 'ti ti-mail',
 		text: i18n.ts.sendMessage,
 		action: () => {
 			os.post({ specified: user });
 		},
 	}, meId !== user.id ? {
 		type: 'link',
-		icon: 'fas fa-comments',
+		icon: 'ti ti-messages',
 		text: i18n.ts.startMessaging,
 		to: '/my/messaging/' + Acct.toString(user),
 	} : undefined, null, {
-		icon: 'fas fa-list-ul',
+		icon: 'ti ti-list',
 		text: i18n.ts.addToList,
 		action: pushList,
 	}, meId !== user.id ? {
-		icon: 'fas fa-users',
+		icon: 'ti ti-users',
 		text: i18n.ts.inviteToGroup,
 		action: inviteGroup,
 	} : undefined] as any;
 
 	if ($i && meId !== user.id) {
 		menu = menu.concat([null, {
-			icon: user.isMuted ? 'fas fa-eye' : 'fas fa-eye-slash',
+			icon: user.isMuted ? 'ti ti-eye' : 'ti ti-eye-off',
 			text: user.isMuted ? i18n.ts.unmute : i18n.ts.mute,
 			action: toggleMute,
 		}, {
-			icon: 'fas fa-ban',
+			icon: 'ti ti-ban',
 			text: user.isBlocking ? i18n.ts.unblock : i18n.ts.block,
 			action: toggleBlock,
 		}]);
 
 		if (user.isFollowed) {
 			menu = menu.concat([{
-				icon: 'fas fa-unlink',
+				icon: 'ti ti-link-off',
 				text: i18n.ts.breakFollow,
 				action: invalidateFollow,
 			}]);
 		}
 
 		menu = menu.concat([null, {
-			icon: 'fas fa-exclamation-circle',
+			icon: 'ti ti-exclamation-circle',
 			text: i18n.ts.reportAbuse,
 			action: reportAbuse,
 		}]);
 
-		if (iAmModerator && enableSudo) {
+		if (iAmModerator) {
 			menu = menu.concat([null, {
-				icon: 'fas fa-microphone-slash',
+				icon: 'ti ti-microphone-2-off',
 				text: user.isSilenced ? i18n.ts.unsilence : i18n.ts.silence,
 				action: toggleSilence,
 			}, {
-				icon: 'fas fa-snowflake',
+				icon: 'ti ti-snowflake',
 				text: user.isSuspended ? i18n.ts.unsuspend : i18n.ts.suspend,
 				action: toggleSuspend,
 			}]);
@@ -230,7 +226,7 @@ export function getUserMenu(user, router: Router = mainRouter) {
 
 	if ($i && meId === user.id) {
 		menu = menu.concat([null, {
-			icon: 'fas fa-pencil-alt',
+			icon: 'ti ti-pencil',
 			text: i18n.ts.editProfile,
 			action: () => {
 				router.push('/settings/profile');
@@ -240,7 +236,7 @@ export function getUserMenu(user, router: Router = mainRouter) {
 
 	if (userActions.length > 0) {
 		menu = menu.concat([null, ...userActions.map(action => ({
-			icon: 'fas fa-plug',
+			icon: 'ti ti-plug',
 			text: action.title,
 			action: () => {
 				action.handler(user);

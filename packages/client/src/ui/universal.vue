@@ -3,7 +3,9 @@
 	<XSidebar v-if="!isMobile" class="sidebar"/>
 
 	<MkStickyContainer class="contents">
-		<template #header><XStatusBars :class="$style.statusbars"/></template>
+		<template #header>
+			<XStatusBars :class="$style.statusbars"/>
+		</template>
 		<main style="min-width: 0;" :style="{ background: pageMetadata?.value?.bg }" @contextmenu.stop="onContextmenu">
 			<div :class="$style.content">
 				<RouterView/>
@@ -16,39 +18,29 @@
 		<XWidgets @mounted="attachSticky"/>
 	</div>
 
-	<button v-if="!isDesktop && !isMobile" class="widgetButton _button" @click="widgetsShowing = true"><i class="fas fa-layer-group"></i></button>
+	<button v-if="!isDesktop && !isMobile" class="widgetButton _button" @click="openWidgets()"><i class="ti ti-apps"></i></button>
 
 	<div v-if="isMobile" class="buttons">
-		<button class="button nav _button" @click="drawerMenuShowing = true"><i class="fas fa-bars"></i><span v-if="menuIndicated" class="indicator"><i class="fas fa-circle"></i></span></button>
-		<button class="button home _button" @click="mainRouter.currentRoute.value.name === 'index' ? top() : mainRouter.push('/')"><i class="fas fa-home"></i></button>
-		<button class="button notifications _button" @click="mainRouter.push('/my/notifications')"><i class="fas fa-bell"></i><span v-if="$i?.hasUnreadNotification" class="indicator"><i class="fas fa-circle"></i></span></button>
-		<button class="button widget _button" @click="widgetsShowing = true"><i class="fas fa-layer-group"></i></button>
-		<button class="button post _button" @click="os.post()"><i class="fas fa-pencil-alt"></i></button>
+		<button class="button nav _button" @click="openDrawerMenu()"><i class="icon ti ti-menu-2"></i><span v-if="menuIndicated" class="indicator"><i class="_indicatorCircle"></i></span></button>
+		<button class="button home _button" @click="mainRouter.currentRoute.value.name === 'index' ? top() : mainRouter.push('/')"><i class="icon ti ti-home"></i></button>
+		<button class="button notifications _button" @click="mainRouter.push('/my/notifications')"><i class="icon ti ti-bell"></i><span v-if="$i?.hasUnreadNotification" class="indicator"><i class="_indicatorCircle"></i></span></button>
+		<button class="button widget _button" @click="openWidgets()"><i class="icon ti ti-apps"></i></button>
+		<button class="button post _button" @click="os.post()"><i class="icon ti ti-pencil"></i></button>
 	</div>
 
-	<transition :name="$store.state.animation ? 'menuDrawer-back' : ''">
-		<div
-			v-if="drawerMenuShowing"
-			class="menuDrawer-back _modalBg"
-			@click="drawerMenuShowing = false"
-			@touchstart.passive="drawerMenuShowing = false"
-		></div>
+	<Transition :name="$store.state.animation ? 'menuDrawer-back' : ''">
+		<div v-if="drawerMenuShowing" class="menuDrawer-back _modalBg" @click="closeDrawerMenu()" @touchstart.passive="closeDrawerMenu()"></div>
 	</transition>
 
-	<transition :name="$store.state.animation ? 'menuDrawer' : ''">
+	<Transition :name="$store.state.animation ? 'menuDrawer' : ''">
 		<XDrawerMenu v-if="drawerMenuShowing" class="menuDrawer"/>
 	</transition>
 
-	<transition :name="$store.state.animation ? 'widgetsDrawer-back' : ''">
-		<div
-			v-if="widgetsShowing"
-			class="widgetsDrawer-back _modalBg"
-			@click="widgetsShowing = false"
-			@touchstart.passive="widgetsShowing = false"
-		></div>
+	<Transition :name="$store.state.animation ? 'widgetsDrawer-back' : ''">
+		<div v-if="widgetsShowing" class="widgetsDrawer-back _modalBg" @click="closeWidgets()" @touchstart.passive="closeWidgets()"></div>
 	</transition>
 
-	<transition :name="$store.state.animation ? 'widgetsDrawer' : ''">
+	<Transition :name="$store.state.animation ? 'widgetsDrawer' : ''">
 		<XWidgets v-if="widgetsShowing" class="widgetsDrawer"/>
 	</transition>
 
@@ -57,7 +49,7 @@
 </template>
 
 <script lang="ts" setup>
-import { defineAsyncComponent, provide, onMounted, computed, ref, watch, ComputedRef } from 'vue';
+import { defineAsyncComponent, provide, onMounted, computed, ref, ComputedRef } from 'vue';
 import XCommon from './_common_/common.vue';
 import { instanceName } from '@/config';
 import { StickySidebar } from '@/scripts/sticky-sidebar';
@@ -67,10 +59,12 @@ import { defaultStore } from '@/store';
 import { navbarItemDef } from '@/navbar';
 import { i18n } from '@/i18n';
 import { $i } from '@/account';
-import { Router } from '@/nirax';
 import { mainRouter } from '@/router';
-import { PageMetadata, provideMetadataReceiver, setPageMetadata } from '@/scripts/page-metadata';
+import { PageMetadata, provideMetadataReceiver } from '@/scripts/page-metadata';
 import { deviceKind } from '@/scripts/device-kind';
+import { disableContextmenu } from '@/scripts/touch';
+import { pushHash, trimHash } from '@/scripts/tms/url-hash';
+
 const XWidgets = defineAsyncComponent(() => import('./universal.widgets.vue'));
 const XSidebar = defineAsyncComponent(() => import('@/ui/_common_/navbar.vue'));
 const XStatusBars = defineAsyncComponent(() => import('@/ui/_common_/statusbars.vue'));
@@ -87,7 +81,8 @@ window.addEventListener('resize', () => {
 
 let pageMetadata = $ref<null | ComputedRef<PageMetadata>>();
 const widgetsEl = $ref<HTMLElement>();
-const widgetsShowing = $ref(false);
+let widgetsShowing = $ref(false);
+let drawerMenuShowing = $ref(false);
 
 provide('router', mainRouter);
 provideMetadataReceiver((info) => {
@@ -105,10 +100,19 @@ const menuIndicated = computed(() => {
 	return false;
 });
 
-const drawerMenuShowing = ref(false);
+mainRouter.on('change', (ctx) => {
+	const prevURL = ctx.beforePath.replace(/[#\?].*$/, '');
+	const newURL = ctx.path.replace(/[#\?].*$/, '');
 
-mainRouter.on('change', () => {
-	drawerMenuShowing.value = false;
+	console.log(prevURL, newURL, ctx);
+
+	if (prevURL !== newURL) {
+		if (!(ctx.path.endsWith('widgets') || ctx.path.endsWith('menu'))) {
+			drawerMenuShowing = false;
+		} else {
+			closeDrawerMenu();
+		}
+	}
 });
 
 document.documentElement.style.overflowY = 'scroll';
@@ -134,22 +138,67 @@ onMounted(() => {
 	}
 });
 
+const openWidgets = (): void => {
+	window.addEventListener('popstate', () => {
+		if (!window.location.hash.endsWith('widgets')) {
+			widgetsShowing = false;
+			return;
+		}
+	});
+
+	widgetsShowing = true;
+
+	history.pushState(null, '', pushHash(window.location.hash, 'widgets'));
+};
+
+const closeWidgets = (): void => {
+	if (window.location.hash.endsWith('widgets')) {
+		trimHash();
+	}
+
+	widgetsShowing = false;
+};
+
+const openDrawerMenu = (): void => {
+	window.addEventListener('popstate', () => {
+		if (!window.location.hash.endsWith('menu')) {
+			drawerMenuShowing = false;
+			return;
+		}
+	});
+
+	drawerMenuShowing = true;
+
+	history.pushState(null, '', pushHash(window.location.hash, 'menu'));
+};
+
+const closeDrawerMenu = (): void => {
+	if (window.location.hash.endsWith('menu')) {
+		trimHash();
+	}
+
+	drawerMenuShowing = false;
+};
+
 const onContextmenu = (ev) => {
+	if (disableContextmenu) return;
 	const isLink = (el: HTMLElement) => {
 		if (el.tagName === 'A') return true;
 		if (el.parentElement) {
 			return isLink(el.parentElement);
 		}
 	};
+
 	if (isLink(ev.target)) return;
 	if (['INPUT', 'TEXTAREA', 'IMG', 'VIDEO', 'CANVAS'].includes(ev.target.tagName) || ev.target.attributes['contenteditable']) return;
 	if (window.getSelection()?.toString() !== '') return;
+
 	const path = mainRouter.getCurrentPath();
 	os.contextMenu([{
 		type: 'label',
 		text: path,
 	}, {
-		icon: 'fas fa-window-maximize',
+		icon: 'ti ti-window-maximize',
 		text: i18n.ts.openInWindow,
 		action: () => {
 			os.pageWindow(path);
@@ -178,6 +227,7 @@ const wallpaper = localStorage.getItem('wallpaper') != null;
 	transform: translateX(0);
 	transition: transform 300ms cubic-bezier(0.23, 1, 0.32, 1), opacity 300ms cubic-bezier(0.23, 1, 0.32, 1);
 }
+
 .widgetsDrawer-enter-from,
 .widgetsDrawer-leave-active {
 	opacity: 0;
@@ -189,6 +239,7 @@ const wallpaper = localStorage.getItem('wallpaper') != null;
 	opacity: 1;
 	transition: opacity 300ms cubic-bezier(0.23, 1, 0.32, 1);
 }
+
 .widgetsDrawer-back-enter-from,
 .widgetsDrawer-back-leave-active {
 	opacity: 0;
@@ -200,6 +251,7 @@ const wallpaper = localStorage.getItem('wallpaper') != null;
 	transform: translateX(0);
 	transition: transform 300ms cubic-bezier(0.23, 1, 0.32, 1), opacity 300ms cubic-bezier(0.23, 1, 0.32, 1);
 }
+
 .menuDrawer-enter-from,
 .menuDrawer-leave-active {
 	opacity: 0;
@@ -211,6 +263,7 @@ const wallpaper = localStorage.getItem('wallpaper') != null;
 	opacity: 1;
 	transition: opacity 300ms cubic-bezier(0.23, 1, 0.32, 1);
 }
+
 .menuDrawer-back-enter-from,
 .menuDrawer-back-leave-active {
 	opacity: 0;
@@ -287,8 +340,10 @@ const wallpaper = localStorage.getItem('wallpaper') != null;
 		z-index: 1000;
 		bottom: 0;
 		left: 0;
-		padding: 16px 16px calc(env(safe-area-inset-bottom, 0px) + 16px) 16px;
-		display: flex;
+		padding: 12px 12px max(12px, env(safe-area-inset-bottom, 0px)) 12px;
+		display: grid;
+		grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+		grid-gap: 8px;
 		width: 100%;
 		box-sizing: border-box;
 		-webkit-backdrop-filter: var(--blur, blur(32px));
@@ -298,28 +353,34 @@ const wallpaper = localStorage.getItem('wallpaper') != null;
 
 		> .button {
 			position: relative;
-			flex: 1;
 			padding: 0;
+			aspect-ratio: 1;
+			width: 100%;
+			max-width: 60px;
 			margin: auto;
-			height: 64px;
-			border-radius: 8px;
+			border-radius: 100%;
 			background: var(--panel);
 			color: var(--fg);
 
-			&:not(:last-child) {
-				margin-right: 12px;
-			}
-
-			@media (max-width: 400px) {
-				height: 60px;
-
-				&:not(:last-child) {
-					margin-right: 8px;
-				}
-			}
-
 			&:hover {
+				background: var(--panelHighlight);
+			}
+
+			&:active {
 				background: var(--X2);
+			}
+
+			&.post {
+				background: linear-gradient(90deg, var(--buttonGradateA), var(--buttonGradateB));
+				color: var(--fgOnAccent);
+
+				&:hover {
+					background: linear-gradient(90deg, var(--X8), var(--X8));
+				}
+
+				&:active {
+					background: linear-gradient(90deg, var(--X8), var(--X8));
+				}
 			}
 
 			> .indicator {
@@ -331,24 +392,9 @@ const wallpaper = localStorage.getItem('wallpaper') != null;
 				animation: blink 1s infinite;
 			}
 
-			&:first-child {
-				margin-left: 0;
-			}
-
-			&:last-child {
-				margin-right: 0;
-			}
-
-			> * {
-				font-size: 20px;
-			}
-
-			&:disabled {
-				cursor: default;
-
-				> * {
-					opacity: 0.5;
-				}
+			> .icon {
+				font-size: 18px;
+				vertical-align: middle;
 			}
 		}
 	}
@@ -382,12 +428,6 @@ const wallpaper = localStorage.getItem('wallpaper') != null;
 }
 
 .spacer {
-	$widgets-hide-threshold: 1090px;
-
-	height: calc(env(safe-area-inset-bottom, 0px) + 96px);
-
-	@media (min-width: ($widgets-hide-threshold + 1px)) {
-		display: none;
-	}
+	height: calc(var(--minBottomSpacing));
 }
 </style>

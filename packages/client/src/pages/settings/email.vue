@@ -3,14 +3,14 @@
 	<FormSection>
 		<template #label>{{ i18n.ts.emailAddress }}</template>
 		<FormInput v-model="emailAddress" type="email" manual-save>
-			<template #prefix><i class="fas fa-envelope"></i></template>
+			<template #prefix><i class="ti ti-mail"></i></template>
 			<template v-if="$i.email && !$i.emailVerified" #caption>{{ i18n.ts.verificationEmailSent }}</template>
-			<template v-else-if="emailAddress === $i.email && $i.emailVerified" #caption><i class="fas fa-check" style="color: var(--success);"></i> {{ i18n.ts.emailVerified }}</template>
+			<template v-else-if="emailAddress === $i.email && $i.emailVerified" #caption><i class="ti ti-check" style="color: var(--success);"></i> {{ i18n.ts.emailVerified }}</template>
 		</FormInput>
 	</FormSection>
 
 	<FormSection>
-		<FormSwitch :model-value="$i.receiveAnnouncementEmail" @update:modelValue="onChangeReceiveAnnouncementEmail">
+		<FormSwitch :model-value="$i.receiveAnnouncementEmail" @update:model-value="onChangeReceiveAnnouncementEmail">
 			{{ i18n.ts.receiveAnnouncementFromInstance }}
 		</FormSwitch>
 	</FormSection>
@@ -34,9 +34,6 @@
 		</FormSwitch>
 		<FormSwitch v-model="emailNotification_groupInvited" class="_formBlock">
 			{{ i18n.ts._notification._types.groupInvited }}
-		</FormSwitch>
-		<FormSwitch v-model="emailNotification_app" class="_formBlock">
-			{{ i18n.ts._notification._types.app }}
 		</FormSwitch>
 	</FormSection>
 </div>
@@ -79,7 +76,6 @@ const emailNotification_quote = ref($i!.emailNotificationTypes.includes('quote')
 const emailNotification_follow = ref($i!.emailNotificationTypes.includes('follow'));
 const emailNotification_receiveFollowRequest = ref($i!.emailNotificationTypes.includes('receiveFollowRequest'));
 const emailNotification_groupInvited = ref($i!.emailNotificationTypes.includes('groupInvited'));
-const emailNotification_app = ref($i!.emailNotificationTypes.includes('app'));
 
 const saveNotificationSettings = () => {
 	os.api('i/update', {
@@ -90,12 +86,11 @@ const saveNotificationSettings = () => {
 			...[emailNotification_follow.value ? 'follow' : null],
 			...[emailNotification_receiveFollowRequest.value ? 'receiveFollowRequest' : null],
 			...[emailNotification_groupInvited.value ? 'groupInvited' : null],
-			...[emailNotification_app.value ? 'app' : null],
 		].filter(x => x != null),
 	});
 };
 
-watch([emailNotification_mention, emailNotification_reply, emailNotification_quote, emailNotification_follow, emailNotification_receiveFollowRequest, emailNotification_groupInvited, emailNotification_app], () => {
+watch([emailNotification_mention, emailNotification_reply, emailNotification_quote, emailNotification_follow, emailNotification_receiveFollowRequest, emailNotification_groupInvited], () => {
 	saveNotificationSettings();
 });
 
@@ -111,6 +106,6 @@ const headerTabs = $computed(() => []);
 
 definePageMetadata({
 	title: i18n.ts.email,
-	icon: 'fas fa-envelope',
+	icon: 'ti ti-mail',
 });
 </script>

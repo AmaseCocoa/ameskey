@@ -51,10 +51,6 @@
 							<template #key>{{ i18n.ts.notes }}</template>
 							<template #value>{{ number(stats.originalNotesCount) }}</template>
 						</MkKeyValue>
-						<MkKeyValue class="_formBlock">
-							<template #key>{{ i18n.ts.onlineStatus }}</template>
-							<template #value>{{ number(onlineUsersCount) }}</template>
-						</MkKeyValue>
 					</FormSplit>
 				</FormSection>
 			</FormSuspense>
@@ -84,10 +80,10 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 import XEmojis from './about.emojis.vue';
 import XFederation from './about.federation.vue';
-import { version, instanceName , host } from '@/config';
+import { version, host } from '@/config';
 import FormLink from '@/components/form/link.vue';
 import FormSection from '@/components/form/section.vue';
 import FormSuspense from '@/components/form/suspense.vue';
@@ -107,15 +103,10 @@ const props = withDefaults(defineProps<{
 
 let stats = $ref(null);
 let tab = $ref(props.initialTab);
-let onlineUsersCount = $ref();
 
 const initStats = () => os.api('stats', {
 }).then((res) => {
 	stats = res;
-});
-
-os.api('get-online-users-count').then(res => {
-	onlineUsersCount = res.count;
 });
 
 const headerActions = $computed(() => []);
@@ -126,20 +117,20 @@ const headerTabs = $computed(() => [{
 }, {
 	key: 'emojis',
 	title: i18n.ts.customEmojis,
-	icon: 'fas fa-laugh',
+	icon: 'ti ti-mood-happy',
 }, {
 	key: 'federation',
 	title: i18n.ts.federation,
-	icon: 'fas fa-globe',
+	icon: 'ti ti-whirl',
 }, {
 	key: 'charts',
 	title: i18n.ts.charts,
-	icon: 'fas fa-chart-simple',
+	icon: 'ti ti-chart-line',
 }]);
 
 definePageMetadata(computed(() => ({
 	title: i18n.ts.instanceInfo,
-	icon: 'fas fa-info-circle',
+	icon: 'ti ti-info-circle',
 })));
 </script>
 

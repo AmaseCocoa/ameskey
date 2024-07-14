@@ -1,32 +1,32 @@
-FROM node:16.20.2-bookworm AS builder
+FROM node:18.14.1-bullseye AS common
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+	--mount=type=cache,target=/var/lib/apt,sharing=locked \
+	apt-get update
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+	--mount=type=cache,target=/var/lib/apt,sharing=locked \
+	apt-get install -y --no-install-recommends build-essential
+
+
+FROM common AS builder
 
 ARG NODE_ENV=production
 
 WORKDIR /misskey
 
-COPY . ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages/backend/package.json ./packages/backend/
+COPY packages/client/package.json ./packages/client/
+COPY packages/sw/package.json ./packages/sw/
 
-RUN apt-get update
-RUN apt-get install -y build-essential
-RUN git submodule update --init
-RUN yarn install
-RUN yarn build
-RUN rm -rf .git
+RUN corepack enable
+RUN pnpm install --frozen-lockfile
 
-FROM node:16.20.2-bookworm-slim AS runner
+COPY gulpfile.js ./gulpfile.js
+COPY locales ./locales
+COPY scripts ./scripts
+COPY packages/backend ./packages/backend
+COPY packages/client ./packages/client
+COPY packages/sw ./packages/sw
 
-WORKDIR /misskey
-
-RUN apt-get update
-RUN apt-get install -y ffmpeg tini
-
-COPY --from=builder /misskey/node_modules ./node_modules
-COPY --from=builder /misskey/built ./built
-COPY --from=builder /misskey/packages/backend/node_modules ./packages/backend/node_modules
-COPY --from=builder /misskey/packages/backend/built ./packages/backend/built
-COPY --from=builder /misskey/packages/client/node_modules ./packages/client/node_modules
-COPY . ./
-
-ENV NODE_ENV=production
-ENTRYPOINT ["/usr/bin/tini", "--"]
-CMD ["npm", "run", "migrateandstart"]
+RUN pnpm build

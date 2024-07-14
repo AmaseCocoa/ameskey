@@ -15,7 +15,7 @@
 		</div>
 		<div class="main">
 			<img :src="$instance.iconUrl || $instance.faviconUrl || '/favicon.ico'" alt="" class="icon"/>
-			<button class="_button _acrylic menu" @click="showMenu"><i class="fas fa-ellipsis-h"></i></button>
+			<button class="_button _acrylic menu" @click="showMenu"><i class="ti ti-dots"></i></button>
 			<div class="fg">
 				<h1>
 					<!-- 背景色によってはロゴが見えなくなるのでとりあえず無効に -->
@@ -25,9 +25,6 @@
 				<div class="about">
 					<!-- eslint-disable-next-line vue/no-v-html -->
 					<div class="desc" v-html="meta.description || i18n.ts.headlineMisskey"></div>
-				</div>
-				<div v-if="meta.disableRegistration" class="warn">
-					<MkInfo warn>{{ i18n.ts.invitationRequiredToRegister }}</MkInfo>
 				</div>
 				<div class="action">
 					<MkButton inline rounded gradate data-cy-signup style="margin-right: 12px;" @click="signup()">{{ i18n.ts.signup }}</MkButton>
@@ -50,19 +47,15 @@
 
 <script lang="ts" setup>
 import { } from 'vue';
-import { toUnicode } from 'punycode/';
 import XTimeline from './welcome.timeline.vue';
 import MarqueeText from '@/components/MkMarquee.vue';
 import XSigninDialog from '@/components/MkSigninDialog.vue';
 import XSignupDialog from '@/components/MkSignupDialog.vue';
 import MkButton from '@/components/MkButton.vue';
-import XNote from '@/components/MkNote.vue';
 import MkFeaturedPhotos from '@/components/MkFeaturedPhotos.vue';
-import { host, instanceName } from '@/config';
+import { instanceName } from '@/config';
 import * as os from '@/os';
-import number from '@/filters/number';
 import { i18n } from '@/i18n';
-import MkInfo from '@/components/MkInfo.vue';
 
 let meta = $ref();
 let stats = $ref();
@@ -111,19 +104,19 @@ function signup() {
 function showMenu(ev) {
 	os.popupMenu([{
 		text: i18n.ts.instanceInfo,
-		icon: 'fas fa-info-circle',
+		icon: 'ti ti-info-circle',
 		action: () => {
 			os.pageWindow('/about');
 		},
 	}, {
 		text: i18n.ts.aboutMisskey,
-		icon: 'fas fa-info-circle',
+		icon: 'ti ti-info-circle',
 		action: () => {
 			os.pageWindow('/about-misskey');
 		},
 	}, null, {
 		text: i18n.ts.help,
-		icon: 'fas fa-question-circle',
+		icon: 'ti ti-question-circle',
 		action: () => {
 			window.open('https://misskey-hub.net/help.md', '_blank');
 		},
@@ -258,10 +251,6 @@ function showMenu(ev) {
 
 				> .about {
 					padding: 0 32px;
-				}
-
-				> .warn {
-					padding: 32px 32px 0 32px;
 				}
 
 				> .action {

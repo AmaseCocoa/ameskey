@@ -3,7 +3,7 @@
 	<template #header><MkPageHeader :actions="headerActions" :tabs="headerTabs"/></template>
 	<MkSpacer :content-max="700">
 		<div class="qkcjvfiv">
-			<MkButton primary class="add" @click="create"><i class="fas fa-plus"></i> {{ i18n.ts.createList }}</MkButton>
+			<MkButton primary class="add" @click="create"><i class="ti ti-plus"></i> {{ i18n.ts.createList }}</MkButton>
 
 			<MkPagination v-slot="{items}" ref="pagingComponent" :pagination="pagination" class="lists _content">
 				<MkA v-for="list in items" :key="list.id" class="list _panel" :to="`/my/lists/${ list.id }`">
@@ -35,6 +35,7 @@ const pagination = {
 async function create() {
 	const { canceled, result: name } = await os.inputText({
 		title: i18n.ts.enterListName,
+		max: 100,
 	});
 	if (canceled) return;
 	await os.apiWithDialog('users/lists/create', { name: name });
@@ -47,9 +48,9 @@ const headerTabs = $computed(() => []);
 
 definePageMetadata({
 	title: i18n.ts.manageLists,
-	icon: 'fas fa-list-ul',
+	icon: 'ti ti-list',
 	action: {
-		icon: 'fas fa-plus',
+		icon: 'ti ti-plus',
 		handler: create,
 	},
 });

@@ -1,16 +1,16 @@
 <template>
 <div class="shaynizk">
 	<div class="form">
-		<MkInput v-model="name" class="_formBlock">
+		<MkInput v-model="name" :max="100" class="_formBlock">
 			<template #label>{{ i18n.ts.name }}</template>
 		</MkInput>
 		<MkSelect v-model="src" class="_formBlock">
 			<template #label>{{ i18n.ts.antennaSource }}</template>
 			<option value="all">{{ i18n.ts._antennaSources.all }}</option>
-			<option value="home">{{ i18n.ts._antennaSources.homeTimeline }}</option>
+			<!--<option value="home">{{ i18n.ts._antennaSources.homeTimeline }}</option>-->
 			<option value="users">{{ i18n.ts._antennaSources.users }}</option>
-			<option value="list">{{ i18n.ts._antennaSources.userList }}</option>
-			<option value="group">{{ i18n.ts._antennaSources.userGroup }}</option>
+			<!--<option value="list">{{ i18n.ts._antennaSources.userList }}</option>-->
+			<!--<option value="group">{{ i18n.ts._antennaSources.userGroup }}</option>-->
 		</MkSelect>
 		<MkSelect v-if="src === 'list'" v-model="userListId" class="_formBlock">
 			<template #label>{{ i18n.ts.userList }}</template>
@@ -38,8 +38,8 @@
 		<MkSwitch v-model="notify" class="_formBlock">{{ i18n.ts.notifyAntenna }}</MkSwitch>
 	</div>
 	<div class="actions">
-		<MkButton inline primary @click="saveAntenna()"><i class="fas fa-save"></i> {{ i18n.ts.save }}</MkButton>
-		<MkButton v-if="antenna.id != null" inline danger @click="deleteAntenna()"><i class="fas fa-trash"></i> {{ i18n.ts.delete }}</MkButton>
+		<MkButton inline primary @click="saveAntenna()"><i class="ti ti-device-floppy"></i> {{ i18n.ts.save }}</MkButton>
+		<MkButton v-if="antenna.id != null" inline danger @click="deleteAntenna()"><i class="ti ti-trash"></i> {{ i18n.ts.delete }}</MkButton>
 	</div>
 </div>
 </template>

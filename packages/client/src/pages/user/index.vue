@@ -2,7 +2,7 @@
 <MkStickyContainer>
 	<template #header><MkPageHeader v-model:tab="tab" :actions="headerActions" :tabs="headerTabs"/></template>
 	<div>
-		<transition name="fade" mode="out-in">
+		<Transition name="fade" mode="out-in">
 			<div v-if="user">
 				<XHome v-if="tab === 'home'" :user="user"/>
 				<XReactions v-else-if="tab === 'reactions'" :user="user"/>
@@ -18,13 +18,10 @@
 </template>
 
 <script lang="ts" setup>
-import { defineAsyncComponent, computed, inject, onMounted, onUnmounted, watch } from 'vue';
-import calcAge from 's-age';
+import { defineAsyncComponent, computed, watch } from 'vue';
 import * as Acct from 'misskey-js/built/acct';
 import * as misskey from 'misskey-js';
-import { getScrollPosition } from '@/scripts/scroll';
-import number from '@/filters/number';
-import { userPage, acct as getAcct } from '@/filters/user';
+import { acct as getAcct } from '@/filters/user';
 import * as os from '@/os';
 import { useRouter } from '@/router';
 import { definePageMetadata } from '@/scripts/page-metadata';
@@ -69,27 +66,27 @@ const headerActions = $computed(() => []);
 const headerTabs = $computed(() => user ? [{
 	key: 'home',
 	title: i18n.ts.overview,
-	icon: 'fas fa-home',
+	icon: 'ti ti-home',
 }, ...($i && ($i.id === user.id)) || user.publicReactions ? [{
 	key: 'reactions',
 	title: i18n.ts.reaction,
-	icon: 'fas fa-laugh',
+	icon: 'ti ti-mood-happy',
 }] : [], {
 	key: 'clips',
 	title: i18n.ts.clips,
-	icon: 'fas fa-paperclip',
+	icon: 'ti ti-paperclip',
 }, {
 	key: 'pages',
 	title: i18n.ts.pages,
-	icon: 'fas fa-file-alt',
+	icon: 'ti ti-news',
 }, {
 	key: 'gallery',
 	title: i18n.ts.gallery,
-	icon: 'fas fa-icons',
+	icon: 'ti ti-icons',
 }] : null);
 
 definePageMetadata(computed(() => user ? {
-	icon: 'fas fa-user',
+	icon: 'ti ti-user',
 	title: user.name ? `${user.name} (@${user.username})` : `@${user.username}`,
 	subtitle: `@${getAcct(user)}`,
 	userName: user,

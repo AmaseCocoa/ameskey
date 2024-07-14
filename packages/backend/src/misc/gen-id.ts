@@ -1,5 +1,6 @@
 import { ulid } from 'ulid';
 import { genAid } from './id/aid.js';
+import { genAidx } from './id/aidx.js';
 import { genMeid } from './id/meid.js';
 import { genMeidg } from './id/meidg.js';
 import { genObjectId } from './id/object-id.js';
@@ -12,6 +13,7 @@ export function genId(date?: Date): string {
 
 	switch (metohd) {
 		case 'aid': return genAid(date);
+		case 'aidx': return genAidx(date);
 		case 'meid': return genMeid(date);
 		case 'meidg': return genMeidg(date);
 		case 'ulid': return ulid(date.getTime());

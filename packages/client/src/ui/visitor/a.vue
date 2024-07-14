@@ -29,7 +29,7 @@
 			</main>
 			<div class="powered-by">
 				<b><MkA to="/">{{ host }}</MkA></b>
-				<small>Powered by <a href="https://github.com/atsu1125/misskey-v12" target="_blank">Misskey</a></small>
+				<small>Powered by <a href="https://github.com/taiyme/misskey" target="_blank">taiyme/misskey</a></small>
 			</div>
 		</div>
 	</div>
@@ -37,10 +37,9 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, defineAsyncComponent } from 'vue';
+import { defineComponent } from 'vue';
 import XHeader from './header.vue';
 import { host, instanceName } from '@/config';
-import { search } from '@/scripts/search';
 import * as os from '@/os';
 import MkPagination from '@/components/MkPagination.vue';
 import MkButton from '@/components/MkButton.vue';
@@ -75,11 +74,13 @@ export default defineComponent({
 	computed: {
 		keymap(): any {
 			return {
-				'd': () => {
+				'd': (): void => {
 					if (ColdDeviceStorage.get('syncDeviceDarkMode')) return;
 					this.$store.set('darkMode', !this.$store.state.darkMode);
 				},
-				's': search,
+				's': (): void => {
+					mainRouter.push('/search');
+				},
 				'h|/': this.help,
 			};
 		},
@@ -147,7 +148,7 @@ export default defineComponent({
 			* {
 				color: #fff;
 			}
-
+					
 			> h1 {
 				margin: 0;
 				padding: 96px 32px 0 32px;
@@ -169,7 +170,7 @@ export default defineComponent({
 
 			> .action {
 				padding-bottom: 64px;
-
+				
 				> button {
 					display: inline-block;
 					padding: 10px 20px;
@@ -210,9 +211,9 @@ export default defineComponent({
 			}
 
 			> header {
-
+				
 			}
-
+					
 			> h1 {
 				margin: 0;
 				padding: 32px;

@@ -3,9 +3,8 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, provide, onUnmounted } from 'vue';
+import { computed, provide, onUnmounted } from 'vue';
 import XNotes from '@/components/MkNotes.vue';
-import * as os from '@/os';
 import { stream } from '@/stream';
 import * as sound from '@/scripts/sound';
 import { $i } from '@/account';
@@ -45,11 +44,11 @@ const onUserRemoved = () => {
 	tlComponent.pagingComponent?.reload();
 };
 
-//const onChangeFollowing = () => {
-//	if (!tlComponent.pagingComponent?.backed) {
-//		tlComponent.pagingComponent?.reload();
-//	}
-//};
+const onChangeFollowing = () => {
+	if (!tlComponent.pagingComponent?.backed) {
+		tlComponent.pagingComponent?.reload();
+	}
+};
 
 let endpoint;
 let query;
@@ -71,16 +70,8 @@ if (props.src === 'antenna') {
 	connection.on('note', prepend);
 
 	connection2 = stream.useChannel('main');
-	//connection2.on('follow', onChangeFollowing);
-	//connection2.on('unfollow', onChangeFollowing);
-} else if (props.src === 'limited') {
-	endpoint = 'notes/limited-timeline';
-	connection = stream.useChannel('limitedTimeline');
-	connection.on('note', prepend);
-
-	connection2 = stream.useChannel('main');
-	//connection2.on('follow', onChangeFollowing);
-	//connection2.on('unfollow', onChangeFollowing);
+	connection2.on('follow', onChangeFollowing);
+	connection2.on('unfollow', onChangeFollowing);
 } else if (props.src === 'local') {
 	endpoint = 'notes/local-timeline';
 	connection = stream.useChannel('localTimeline');
@@ -89,17 +80,9 @@ if (props.src === 'antenna') {
 	endpoint = 'notes/hybrid-timeline';
 	connection = stream.useChannel('hybridTimeline');
 	connection.on('note', prepend);
-} else if (props.src === 'media') {
-	endpoint = 'notes/media-timeline';
-	connection = stream.useChannel('mediaTimeline');
-	connection.on('note', prepend);
 } else if (props.src === 'global') {
 	endpoint = 'notes/global-timeline';
 	connection = stream.useChannel('globalTimeline');
-	connection.on('note', prepend);
-} else if (props.src === 'personal') {
-	endpoint = 'notes/personal-timeline';
-	connection = stream.useChannel('personalTimeline');
 	connection.on('note', prepend);
 } else if (props.src === 'mentions') {
 	endpoint = 'notes/mentions';

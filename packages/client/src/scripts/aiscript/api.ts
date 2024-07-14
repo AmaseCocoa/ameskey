@@ -13,6 +13,7 @@ export function createAiScriptEnv(opts) {
 				type: type ? type.value : 'info',
 				title: title.value,
 				text: text.value,
+				allowMfm: true,
 			});
 		}),
 		'Mk:confirm': values.FN_NATIVE(async ([title, text, type]) => {
@@ -20,12 +21,11 @@ export function createAiScriptEnv(opts) {
 				type: type ? type.value : 'question',
 				title: title.value,
 				text: text.value,
+				allowMfm: true,
 			});
 			return confirm.canceled ? values.FALSE : values.TRUE;
 		}),
 		'Mk:api': values.FN_NATIVE(async ([ep, param, token]) => {
-			utils.assertString(ep);
-			if (ep.value.includes('://')) throw new Error('invalid endpoint');
 			if (token) {
 				utils.assertString(token);
 				// バグがあればundefinedもあり得るため念のため
@@ -33,8 +33,7 @@ export function createAiScriptEnv(opts) {
 			}
 			apiRequests++;
 			if (apiRequests > 16) return values.NULL;
-			const actualToken: string|null = token?.value ?? opts.token ?? null;
-			const res = await os.api(ep.value, utils.valToJs(param), actualToken);
+			const res = await os.api(ep.value, utils.valToJs(param), token ? token.value : (opts.token || null));
 			return utils.jsToVal(res);
 		}),
 		'Mk:save': values.FN_NATIVE(([key, value]) => {

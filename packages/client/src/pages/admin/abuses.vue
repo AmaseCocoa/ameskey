@@ -50,11 +50,9 @@
 import { computed } from 'vue';
 
 import XHeader from './_header_.vue';
-import MkInput from '@/components/form/input.vue';
 import MkSelect from '@/components/form/select.vue';
 import MkPagination from '@/components/MkPagination.vue';
 import XAbuseReport from '@/components/MkAbuseReport.vue';
-import * as os from '@/os';
 import { i18n } from '@/i18n';
 import { definePageMetadata } from '@/scripts/page-metadata';
 
@@ -86,7 +84,7 @@ const headerTabs = $computed(() => []);
 
 definePageMetadata({
 	title: i18n.ts.abuseReports,
-	icon: 'fas fa-exclamation-circle',
+	icon: 'ti ti-exclamation-circle',
 });
 </script>
 

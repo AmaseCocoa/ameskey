@@ -5,7 +5,7 @@
 		<div class="_root">
 			<div v-if="tab === 'explore'">
 				<MkFolder class="_gap">
-					<template #header><i class="fas fa-clock"></i>{{ i18n.ts.recentPosts }}</template>
+					<template #header><i class="ti ti-clock"></i>{{ i18n.ts.recentPosts }}</template>
 					<MkPagination v-slot="{items}" :pagination="recentPostsPagination" :disable-auto-load="true">
 						<div class="vfpdbgtk">
 							<MkGalleryPostPreview v-for="post in items" :key="post.id" :post="post" class="post"/>
@@ -13,7 +13,7 @@
 					</MkPagination>
 				</MkFolder>
 				<MkFolder class="_gap">
-					<template #header><i class="fas fa-fire-alt"></i>{{ i18n.ts.popularPosts }}</template>
+					<template #header><i class="ti ti-comet"></i>{{ i18n.ts.popularPosts }}</template>
 					<MkPagination v-slot="{items}" :pagination="popularPostsPagination" :disable-auto-load="true">
 						<div class="vfpdbgtk">
 							<MkGalleryPostPreview v-for="post in items" :key="post.id" :post="post" class="post"/>
@@ -29,7 +29,7 @@
 				</MkPagination>
 			</div>
 			<div v-else-if="tab === 'my'">
-				<MkA to="/gallery/new" class="_link" style="margin: 16px;"><i class="fas fa-plus"></i> {{ i18n.ts.postToGallery }}</MkA>
+				<MkA to="/gallery/new" class="_link" style="margin: 16px;"><i class="ti ti-plus"></i> {{ i18n.ts.postToGallery }}</MkA>
 				<MkPagination v-slot="{items}" :pagination="myPostsPagination">
 					<div class="vfpdbgtk">
 						<MkGalleryPostPreview v-for="post in items" :key="post.id" :post="post" class="post"/>
@@ -42,16 +42,10 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, defineComponent, watch } from 'vue';
-import XUserList from '@/components/MkUserList.vue';
+import { watch } from 'vue';
 import MkFolder from '@/components/MkFolder.vue';
-import MkInput from '@/components/form/input.vue';
-import MkButton from '@/components/MkButton.vue';
-import MkTab from '@/components/MkTab.vue';
 import MkPagination from '@/components/MkPagination.vue';
 import MkGalleryPostPreview from '@/components/MkGalleryPostPreview.vue';
-import number from '@/filters/number';
-import * as os from '@/os';
 import { definePageMetadata } from '@/scripts/page-metadata';
 import { i18n } from '@/i18n';
 import { useRouter } from '@/router';
@@ -98,7 +92,7 @@ watch(() => props.tag, () => {
 });
 
 const headerActions = $computed(() => [{
-	icon: 'fas fa-plus',
+	icon: 'ti ti-plus',
 	text: i18n.ts.create,
 	handler: () => {
 		router.push('/gallery/new');
@@ -108,20 +102,20 @@ const headerActions = $computed(() => [{
 const headerTabs = $computed(() => [{
 	key: 'explore',
 	title: i18n.ts.gallery,
-	icon: 'fas fa-icons',
+	icon: 'ti ti-icons',
 }, {
 	key: 'liked',
 	title: i18n.ts._gallery.liked,
-	icon: 'fas fa-heart',
+	icon: 'ti ti-heart',
 }, {
 	key: 'my',
 	title: i18n.ts._gallery.my,
-	icon: 'fas fa-edit',
+	icon: 'ti ti-edit',
 }]);
 
 definePageMetadata({
 	title: i18n.ts.gallery,
-	icon: 'fas fa-icons',
+	icon: 'ti ti-icons',
 });
 </script>
 

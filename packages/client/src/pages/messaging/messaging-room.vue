@@ -38,9 +38,9 @@
 				</I18n>
 				<MkEllipsis/>
 			</div>
-			<transition :name="animation ? 'fade' : ''">
+			<Transition :name="animation ? 'fade' : ''">
 				<div v-show="showIndicator" class="new-message">
-					<button class="_buttonPrimary" @click="onIndicatorClick"><i class="fas fa-fw fa-arrow-circle-down"></i>{{ i18n.ts.newMessageExists }}</button>
+					<button class="_buttonPrimary" @click="onIndicatorClick"><i class="ti ti-fw ti-arrow-down-circle"></i>{{ i18n.ts.newMessageExists }}</button>
 				</div>
 			</transition>
 			<XForm v-if="!fetching" ref="formEl" :user="user" :group="group" class="form"/>
@@ -65,6 +65,7 @@ import { i18n } from '@/i18n';
 import { $i } from '@/account';
 import { defaultStore } from '@/store';
 import { definePageMetadata } from '@/scripts/page-metadata';
+import { parseObject } from '@/scripts/tms/parse';
 
 const props = defineProps<{
 	userAcct?: string;
@@ -99,7 +100,7 @@ async function fetch() {
 		const acct = Acct.parse(props.userAcct);
 		user = await os.api('users/show', { username: acct.username, host: acct.host || undefined });
 		group = null;
-
+		
 		pagination = {
 			endpoint: 'messaging/messages',
 			limit: 20,
@@ -154,22 +155,7 @@ function onDragover(ev: DragEvent) {
 	const isDriveFile = ev.dataTransfer.types[0] === _DATA_TRANSFER_DRIVE_FILE_;
 
 	if (isFile || isDriveFile) {
-		switch (ev.dataTransfer.effectAllowed) {
-			case 'all':
-			case 'uninitialized':
-			case 'copy':
-			case 'copyLink':
-			case 'copyMove':
-				ev.dataTransfer.dropEffect = 'copy';
-				break;
-			case 'linkMove':
-			case 'move':
-				ev.dataTransfer.dropEffect = 'move';
-				break;
-			default:
-				ev.dataTransfer.dropEffect = 'none';
-				break;
-		}
+		ev.dataTransfer.dropEffect = ev.dataTransfer.effectAllowed === 'all' ? 'copy' : 'move';
 	} else {
 		ev.dataTransfer.dropEffect = 'none';
 	}
@@ -193,7 +179,7 @@ function onDrop(ev: DragEvent): void {
 	//#region ドライブのファイル
 	const driveFile = ev.dataTransfer.getData(_DATA_TRANSFER_DRIVE_FILE_);
 	if (driveFile != null && driveFile !== '') {
-		const file = JSON.parse(driveFile);
+		const file = parseObject<Misskey.entities.DriveFile>(driveFile);
 		formEl.file = file;
 	}
 	//#endregion
@@ -211,7 +197,12 @@ function onMessage(message) {
 		});
 	}
 
-	if (message.userId !== $i?.id) {
+	if (_isBottom) {
+		// Scroll to bottom
+		nextTick(() => {
+			thisScrollToBottom();
+		});
+	} else if (message.userId !== $i?.id) {
 		// Notify
 		notifyNewMessage();
 	}
@@ -295,7 +286,7 @@ definePageMetadata(computed(() => !fetching ? user ? {
 	avatar: user,
 } : {
 	title: group?.name,
-	icon: 'fas fa-users',
+	icon: 'ti ti-users',
 } : null));
 </script>
 
@@ -346,7 +337,6 @@ definePageMetadata(computed(() => !fetching ? user ? {
 		z-index: 2;
 		bottom: 0;
 		padding-top: 8px;
-		bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
 
 		> .new-message {
 			width: 100%;

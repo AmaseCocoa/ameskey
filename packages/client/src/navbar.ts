@@ -1,6 +1,5 @@
-import { computed, ref, reactive } from 'vue';
+import { computed, reactive } from 'vue';
 import { $i } from './account';
-import { search } from '@/scripts/search';
 import * as os from '@/os';
 import { i18n } from '@/i18n';
 import { ui } from '@/config';
@@ -9,139 +8,125 @@ import { unisonReload } from '@/scripts/unison-reload';
 export const navbarItemDef = reactive({
 	notifications: {
 		title: 'notifications',
-		icon: 'fas fa-bell',
+		icon: 'ti ti-bell',
 		show: computed(() => $i != null),
 		indicated: computed(() => $i != null && $i.hasUnreadNotification),
 		to: '/my/notifications',
 	},
 	messaging: {
 		title: 'messaging',
-		icon: 'fas fa-comments',
+		icon: 'ti ti-messages',
 		show: computed(() => $i != null),
 		indicated: computed(() => $i != null && $i.hasUnreadMessagingMessage),
 		to: '/my/messaging',
 	},
 	drive: {
 		title: 'drive',
-		icon: 'fas fa-cloud',
+		icon: 'ti ti-cloud',
 		show: computed(() => $i != null),
 		to: '/my/drive',
 	},
 	followRequests: {
 		title: 'followRequests',
-		icon: 'fas fa-user-clock',
-		show: computed(() => $i != null && ($i.isLocked || $i.hasPendingReceivedFollowRequest)),
+		icon: 'ti ti-user-plus',
+		show: computed(() => $i != null && $i.isLocked),
 		indicated: computed(() => $i != null && $i.hasPendingReceivedFollowRequest),
 		to: '/my/follow-requests',
 	},
 	explore: {
 		title: 'explore',
-		icon: 'fas fa-hashtag',
+		icon: 'ti ti-hash',
 		to: '/explore',
 	},
 	announcements: {
 		title: 'announcements',
-		icon: 'fas fa-broadcast-tower',
+		icon: 'ti ti-speakerphone',
 		indicated: computed(() => $i != null && $i.hasUnreadAnnouncement),
 		to: '/announcements',
 	},
 	search: {
 		title: 'search',
-		icon: 'fas fa-search',
-		action: () => search(),
+		icon: 'ti ti-search',
+		to: '/search',
 	},
 	lists: {
 		title: 'lists',
-		icon: 'fas fa-list-ul',
+		icon: 'ti ti-list',
 		show: computed(() => $i != null),
 		to: '/my/lists',
 	},
-	groups: {
-		title: 'groups',
-		icon: 'fas fa-users',
-		show: computed(() => $i != null),
-		to: '/my/groups',
-	},
 	antennas: {
 		title: 'antennas',
-		icon: 'fas fa-satellite',
+		icon: 'ti ti-antenna',
 		show: computed(() => $i != null),
 		to: '/my/antennas',
 	},
 	favorites: {
 		title: 'favorites',
-		icon: 'fas fa-star',
+		icon: 'ti ti-star',
 		show: computed(() => $i != null),
 		to: '/my/favorites',
 	},
 	pages: {
 		title: 'pages',
-		icon: 'fas fa-file-alt',
+		icon: 'ti ti-news',
 		to: '/pages',
 	},
 	gallery: {
 		title: 'gallery',
-		icon: 'fas fa-icons',
+		icon: 'ti ti-icons',
 		to: '/gallery',
+	},
+	groups: {
+		title: 'groups',
+		icon: 'ti ti-users',
+		show: computed(() => $i != null),
+		to: '/my/groups',
 	},
 	clips: {
 		title: 'clip',
-		icon: 'fas fa-paperclip',
+		icon: 'ti ti-paperclip',
 		show: computed(() => $i != null),
 		to: '/my/clips',
 	},
 	channels: {
 		title: 'channel',
-		icon: 'fas fa-satellite-dish',
+		icon: 'ti ti-device-tv',
 		to: '/channels',
-	},
-	federation: {
-		title: 'federation',
-		icon: 'fas fa-globe',
-		to: '/about#federation',
-	},
-	emojis: {
-		title: 'emojis',
-		icon: 'fas fa-laugh',
-		to: '/about#emojis',
-	},
-	scratchpad: {
-		title: 'scratchpad',
-		icon: 'fas fa-terminal',
-		to: '/scratchpad',
 	},
 	ui: {
 		title: 'switchUi',
-		icon: 'fas fa-columns',
-		action: (ev) => {
+		icon: 'ti ti-devices',
+		action: (ev: MouseEvent) => {
+			const el = ev.currentTarget ?? ev.target;
 			os.popupMenu([{
 				text: i18n.ts.default,
 				active: ui === 'default' || ui === null,
-				action: () => {
+				action: (): void => {
 					localStorage.setItem('ui', 'default');
 					unisonReload();
 				},
 			}, {
 				text: i18n.ts.deck,
 				active: ui === 'deck',
-				action: () => {
+				action: (): void => {
 					localStorage.setItem('ui', 'deck');
 					unisonReload();
 				},
 			}, {
 				text: i18n.ts.classic,
 				active: ui === 'classic',
-				action: () => {
+				action: (): void => {
 					localStorage.setItem('ui', 'classic');
 					unisonReload();
 				},
-			}], ev.currentTarget ?? ev.target);
+			}], el instanceof HTMLElement ? el : undefined);
 		},
 	},
 	reload: {
 		title: 'reload',
-		icon: 'fas fa-refresh',
-		action: (ev) => {
+		icon: 'ti ti-refresh',
+		action: () => {
 			location.reload();
 		},
 	},

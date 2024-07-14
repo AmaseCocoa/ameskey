@@ -6,7 +6,7 @@
 				<template #label>{{ i18n.ts.selectWidget }}</template>
 				<option v-for="widget in widgetDefs" :key="widget" :value="widget">{{ i18n.t(`_widgets.${widget}`) }}</option>
 			</MkSelect>
-			<MkButton inline primary class="mk-widget-add" @click="addWidget"><i class="fas fa-plus"></i> {{ i18n.ts.add }}</MkButton>
+			<MkButton inline primary class="mk-widget-add" @click="addWidget"><i class="ti ti-plus"></i> {{ i18n.ts.add }}</MkButton>
 			<MkButton inline @click="$emit('exit')">{{ i18n.ts.close }}</MkButton>
 		</header>
 		<XDraggable
@@ -17,27 +17,28 @@
 		>
 			<template #item="{element}">
 				<div class="customize-container">
-					<button class="config _button" @click.prevent.stop="configWidget(element.id)"><i class="fas fa-cog"></i></button>
-					<button class="remove _button" @click.prevent.stop="removeWidget(element)"><i class="fas fa-times"></i></button>
+					<button class="config _button" @click.prevent.stop="configWidget(element.id)"><i class="ti ti-settings"></i></button>
+					<button class="remove _button" @click.prevent.stop="removeWidget(element)"><i class="ti ti-x"></i></button>
 					<div class="handle">
-						<component :is="`mkw-${element.name}`" :ref="el => widgetRefs[element.id] = el" class="widget" :widget="element" @updateProps="updateWidget(element.id, $event)"/>
+						<component :is="`mkw-${element.name}`" :ref="el => widgetRefs[element.id] = el" class="widget" :widget="element" @update-props="updateWidget(element.id, $event)"/>
 					</div>
 				</div>
 			</template>
 		</XDraggable>
 	</template>
-	<component :is="`mkw-${widget.name}`" v-for="widget in widgets" v-else :key="widget.id" :ref="el => widgetRefs[widget.id] = el" class="widget" :widget="widget" @updateProps="updateWidget(widget.id, $event)" @contextmenu.stop="onContextmenu(widget, $event)"/>
+	<component :is="`mkw-${widget.name}`" v-for="widget in widgets" v-else :key="widget.id" :ref="el => widgetRefs[widget.id] = el" class="widget" :widget="widget" @update-props="updateWidget(widget.id, $event)" @contextmenu.stop="onContextmenu(widget, $event)"/>
 </div>
 </template>
 
 <script lang="ts" setup>
-import { defineAsyncComponent, reactive, ref, computed } from 'vue';
+import { defineAsyncComponent, ref, computed } from 'vue';
 import { v4 as uuid } from 'uuid';
 import MkSelect from '@/components/form/select.vue';
 import MkButton from '@/components/MkButton.vue';
 import { widgets as widgetDefs } from '@/widgets';
 import * as os from '@/os';
 import { i18n } from '@/i18n';
+import { disableContextmenu } from '@/scripts/touch';
 
 const XDraggable = defineAsyncComponent(() => import('vuedraggable'));
 
@@ -61,11 +62,11 @@ const emit = defineEmits<{
 }>();
 
 const widgetRefs = {};
-const configWidget = (id: string) => {
+const configWidget = (id: Widget['id']): void => {
 	widgetRefs[id].configure();
 };
-const widgetAdderSelected = ref(null);
-const addWidget = () => {
+const widgetAdderSelected = ref<string | null>(null);
+const addWidget = (): void => {
 	if (widgetAdderSelected.value == null) return;
 
 	emit('addWidget', {
@@ -76,10 +77,10 @@ const addWidget = () => {
 
 	widgetAdderSelected.value = null;
 };
-const removeWidget = (widget) => {
+const removeWidget = (widget: Widget): void => {
 	emit('removeWidget', widget);
 };
-const updateWidget = (id, data) => {
+const updateWidget = (id: Widget['id'], data: Widget['data']): void => {
 	emit('updateWidget', { id, data });
 };
 const widgets_ = computed({
@@ -89,12 +90,16 @@ const widgets_ = computed({
 	},
 });
 
-function onContextmenu(widget: Widget, ev: MouseEvent) {
-	const isLink = (el: HTMLElement) => {
+const onContextmenu = (widget: Widget, ev: MouseEvent): void => {
+	if (disableContextmenu) return;
+	if (!(ev.target instanceof HTMLElement)) return;
+
+	const isLink = (el: HTMLElement): el is HTMLAnchorElement => {
 		if (el.tagName === 'A') return true;
 		if (el.parentElement) {
 			return isLink(el.parentElement);
 		}
+		return false;
 	};
 	if (isLink(ev.target)) return;
 	if (['INPUT', 'TEXTAREA', 'IMG', 'VIDEO', 'CANVAS'].includes(ev.target.tagName) || ev.target.attributes['contenteditable']) return;
@@ -104,13 +109,13 @@ function onContextmenu(widget: Widget, ev: MouseEvent) {
 		type: 'label',
 		text: i18n.t(`_widgets.${widget.name}`),
 	}, {
-		icon: 'fas fa-cog',
+		icon: 'ti ti-settings',
 		text: i18n.ts.settings,
-		action: () => {
+		action: (): void => {
 			configWidget(widget.id);
 		},
 	}], ev);
-}
+};
 </script>
 
 <style lang="scss" scoped>
